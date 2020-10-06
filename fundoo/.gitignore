@@ -1,2 +1,4 @@
 env
-fundoo/__pycache__/*
+__pycache__
+account/migrations
+.vscode
