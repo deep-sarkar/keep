@@ -4,7 +4,7 @@ from django.contrib.auth.models import User
 class Note(models.Model):
     user      = models.ForeignKey(User, on_delete=models.CASCADE)
     title     = models.CharField(max_length = 100, blank=False, null=False)
-    note      = models.TextField(blank = False, null = False) 
+    note      = models.TextField(blank = True, null = True) 
     image     = models.ImageField(blank = True, null = True)
     reminder  = models.DateTimeField(auto_now = False,auto_now_add = False, null = True, blank = True)
     archive   = models.BooleanField(default=False)
