@@ -5,5 +5,5 @@ class MyBaseException(Exception):
         self.code = code
         self.msg = msg
 
-class ObjectDoesNotExixts(MyBaseException):
+class RequestObjectDoesNotExixts(MyBaseException):
     pass
