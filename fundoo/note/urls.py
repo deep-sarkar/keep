@@ -1,8 +1,9 @@
 from django.urls import path
-from note.views import CreateNote, GetNote, EditNote
+from note.views import CreateNote, GetNote, EditNote, TrashNote
 
 urlpatterns = [
     path('create/', CreateNote.as_view()),
     path('get/', GetNote.as_view()),
     path('edit/<int:id>/', EditNote.as_view()),
+    path('trash/', TrashNote.as_view())
 ]
