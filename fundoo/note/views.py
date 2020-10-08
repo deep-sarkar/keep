@@ -85,3 +85,17 @@ class EditNote(GenericAPIView):
             return Response({"code":300, "msg":response_code[300]})
         except Exception:
             return Response({"code":416, "msg":response_code[416]})
+
+class TrashNote(GenericAPIView):
+    serializer_class = EditNoteSerializer
+
+    @method_decorator(login_required)
+    def get(self, request, *args, **kwargs):
+        user_id = request.user.id
+        query = '''SELECT *
+                   FROM note_note
+                   WHERE (trash = true) and (user_id = %s) 
+                   ORDER BY id desc''' %user_id
+        notes = Note.objects.raw(query)
+        serializer = EditNoteSerializer(notes, many=True)
+        return Response({"data":serializer.data, "code":200, "msg":response_code[200]})
