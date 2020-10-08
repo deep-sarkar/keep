@@ -14,8 +14,8 @@ class Label(models.Model):
     
 class Note(models.Model):
     user      = models.ForeignKey(User, on_delete=models.CASCADE)
-    title     = models.CharField(max_length = 100, blank=False, null=False)
-    note      = models.TextField(null=True) 
+    title     = models.CharField(max_length = 100, default='')
+    note      = models.TextField(default='') 
     image     = models.ImageField(blank = True, null = True)
     reminder  = models.DateTimeField(auto_now = False,auto_now_add = False, null = True, blank = True)
     archive   = models.BooleanField(default=False)
