@@ -1,7 +1,7 @@
 from note.models import LabelMap, Note
 from label.models import Label
 from django.core.exceptions import ObjectDoesNotExist
-from note.exceptions import LabelMappingException, NotesNotFoundError
+from note.exceptions import LabelMappingException, NotesNotFoundError, labelsNotFoundError
 from util.status import response_code
 
 def add_label_id_from_label(labels, instance, user):
@@ -58,3 +58,13 @@ def get_all_archive_note(user_id):
         return notes
     except Exception:
         raise NotesNotFoundError(409, response_code[409])
+
+def get_all_label(user_id):
+    try:
+        query    =   '''SELECT * 
+                        FROM label_label
+                        WHERE user_id = %s
+                        ORDER BY id desc''' % user_id
+        labels = Label.objects.raw(query)
+    except Exception:
+        raise labelsNotFoundError(code=308, msg=response_code[308])
