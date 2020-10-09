@@ -4,7 +4,7 @@ from .exceptions import (PasswordDidntMatched,
                         EmailAlreadyExistsError,
                         UsernameDoesNotExistsError,
                         )
-from status import response_code
+from util.status import response_code
 from django.contrib.auth import get_user_model
 
 

@@ -4,7 +4,7 @@ from django.contrib.auth.models import User
 from note.models import Note, LabelMap
 from label.models import Label
 from note.serializers import NoteSerializer, EditNoteSerializer, GetNoteSerializer
-from status import response_code
+from util.status import response_code
 from django.utils.decorators import method_decorator
 from django.contrib.auth.decorators import login_required
 from note.exceptions import RequestObjectDoesNotExixts

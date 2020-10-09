@@ -1,6 +1,6 @@
 from django.shortcuts import render
 from label.models import Label
-from status import response_code
+from util.status import response_code
 from django.utils.decorators import method_decorator
 from django.contrib.auth.decorators import login_required
 from note.exceptions import RequestObjectDoesNotExixts

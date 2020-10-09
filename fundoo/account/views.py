@@ -18,9 +18,6 @@ from django.contrib.sites.shortcuts import get_current_site
 from fundoo.settings import EMAIL_HOST_USER
 
 
-#import from status
-from status import response_code
-
 #import from serializers
 from .serializers import (RegistrationSerializer, 
                           LoginSerializer, 
@@ -64,8 +61,8 @@ from . import redis
 from django.core.cache import cache
 
 #Static data
-import static_data
-import os
+from util import static_data
+from util.status import response_code
 
 jwt_encode_handler = api_settings.JWT_ENCODE_HANDLER
 jwt_payload_handler = api_settings.JWT_PAYLOAD_HANDLER
