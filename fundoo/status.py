@@ -26,6 +26,6 @@ response_code = {
     413 : "Login first",
     414 : "Invalid operation",
     415 : "Enter upcoming time",
-    416 : "Something went wrong. Pleaase Try again"
-    
+    416 : "Something went wrong. Pleaase Try again",
+    417 : "Error occoured while mapping label"
 }
