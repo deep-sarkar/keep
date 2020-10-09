@@ -28,6 +28,7 @@ from django.core.exceptions import ObjectDoesNotExist
 from services.repository import ( add_label_id_from_label,
                                   get_all_note,
                                   edit_label_id_from_label,
+                                  get_all_trash_note,
                                 )
 
 class CreateNote(GenericAPIView):
@@ -122,14 +123,12 @@ class TrashNote(GenericAPIView):
 
     @method_decorator(login_required)
     def get(self, request, *args, **kwargs):
-        user_id = request.user.id
-        query = '''SELECT *
-                   FROM note_note
-                   WHERE (trash = true) and (user_id = %s) 
-                   ORDER BY id desc''' %user_id
-        notes = Note.objects.raw(query)
-        serializer = EditNoteSerializer(notes, many=True)
-        return Response({"data":serializer.data, "code":200, "msg":response_code[200]})
+        try:
+            notes = get_all_trash_note(request.user.id)
+            serializer = EditNoteSerializer(notes, many=True)
+            return Response({"data":serializer.data, "code":200, "msg":response_code[200]})
+        except NotesNotFoundError as e :
+            return Response({'code':e.code, 'msg':e.msg})
 
 class ArchiveNote(GenericAPIView):
     serializer_class = EditNoteSerializer
