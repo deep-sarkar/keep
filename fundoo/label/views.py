@@ -3,12 +3,13 @@ from label.models import Label
 from util.status import response_code
 from django.utils.decorators import method_decorator
 from django.contrib.auth.decorators import login_required
-from note.exceptions import RequestObjectDoesNotExixts
+from note.exceptions import RequestObjectDoesNotExixts, labelsNotFoundError
 from django.core.exceptions import ObjectDoesNotExist
 from label.serializers import LabelSerializer
 from rest_framework.response import Response
 from rest_framework.generics import GenericAPIView
 from note.models import LabelMap
+from services.repository import get_all_label
 
 class CreateLabel(GenericAPIView):
     serializer_class = LabelSerializer
@@ -31,14 +32,13 @@ class GetLabel(GenericAPIView):
 
     @method_decorator(login_required)
     def get(self, request, *args, **kwargs):
-        user_id  = request.user.id
-        query    = '''SELECT * 
-                      FROM label_label
-                      WHERE user_id = %s
-                      ORDER BY id desc''' % user_id
-        labels = Label.objects.raw(query)
-        serializer = LabelSerializer(labels, many = True)
-        return Response({"data":serializer.data,"code":200, "msg":response_code[200]})
+        try:
+            labels = get_all_label(request.user.id)
+            serializer = LabelSerializer(labels, many = True)
+            return Response({"data":serializer.data,"code":200, "msg":response_code[200]})
+        except labelsNotFoundError as e:
+            return Response({'code':e.code, 'msg':e.msg})
+
 
 class EditLabel(GenericAPIView):
     serializer_class = LabelSerializer
