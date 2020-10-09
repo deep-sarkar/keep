@@ -4,7 +4,7 @@ from note.models import Note, Label
 class LabelSerializer(serializers.ModelSerializer):
     class Meta:
         model  = Label
-        fields = 'name'
+        fields = '__all__'
 
 class NoteSerializer(serializers.ModelSerializer):
     class Meta:
