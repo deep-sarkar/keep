@@ -81,13 +81,18 @@ class EditLabel(GenericAPIView):
 class DeleteLabel(GenericAPIView):
     serializer_class = LabelSerializer
 
+    @method_decorator(login_required)
     def delete(self, request, id=None):
-        user_id = request.user.id
         try:
-            mapped_notes = LabelMap.objects.filter(label_id = id)
-            if mapped_notes != None:
-                mapped_notes.delete()
-            Label.objects.get(id=id, user_id = user_id).delete()
-            return Response({"code":200, "msg":response_code[200]})
-        except ObjectDoesNotExist:
-            return Response({"code":308, "msg":response_code[308]})
+            user_id = request.user.id
+            try:
+                label = Label.objects.get(id = id, user_id =user_id)
+                mapped_notes = LabelMap.objects.filter(label_id = id)
+                if mapped_notes != None:
+                    mapped_notes.delete()
+                    label.delete()
+                return Response({"code":200, "msg":response_code[200]})
+            except ObjectDoesNotExist:
+                return Response({"code":308, "msg":response_code[308]})
+        except Exception:
+            return Response({"code":416, "msg":response_code[416]})
