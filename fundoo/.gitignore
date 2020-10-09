@@ -1,6 +1,7 @@
 env
 __pycache__
 account/migrations
+label/migrations
 note/migrations
 .vscode
 media
