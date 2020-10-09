@@ -8,6 +8,7 @@ from django.core.exceptions import ObjectDoesNotExist
 from label.serializers import LabelSerializer
 from rest_framework.response import Response
 from rest_framework.generics import GenericAPIView
+from note.models import LabelMap
 
 class CreateLabel(GenericAPIView):
     serializer_class = LabelSerializer
@@ -65,6 +66,7 @@ class EditLabel(GenericAPIView):
         except Exception:
             return Response({"code":416, "msg":response_code[416]})
 
+    @method_decorator(login_required)
     def put(self, request, id=None):
         try:
             label = self.get_object(id)
@@ -75,3 +77,17 @@ class EditLabel(GenericAPIView):
             serializer.save(user = request.user)
             return Response({"data":serializer.data,"code":200, "msg":response_code[200]})
         return Response({"code":300, "msg":response_code[300]})
+
+class DeleteLabel(GenericAPIView):
+    serializer_class = LabelSerializer
+
+    def delete(self, request, id=None):
+        user_id = request.user.id
+        try:
+            mapped_notes = LabelMap.objects.filter(label_id = id)
+            if mapped_notes != None:
+                mapped_notes.delete()
+            Label.objects.get(id=id, user_id = user_id).delete()
+            return Response({"code":200, "msg":response_code[200]})
+        except ObjectDoesNotExist:
+            return Response({"code":308, "msg":response_code[308]})
