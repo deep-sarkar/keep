@@ -7,3 +7,6 @@ class MyBaseException(Exception):
 
 class RequestObjectDoesNotExixts(MyBaseException):
     pass
+
+class LabelMappingException(MyBaseException):
+    pass
