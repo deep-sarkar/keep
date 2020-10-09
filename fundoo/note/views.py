@@ -159,3 +159,18 @@ class CreateLabel(GenericAPIView):
             return Response({"code":201, "msg":response_code[201]})
         return Response({"code":300, "msg":response_code[300]})
 
+
+class GetLabel(GenericAPIView):
+    serializer_class = LabelSerializer
+
+    @method_decorator(login_required)
+    def get(self, request, *args, **kwargs):
+        user_id  = request.user.id
+        query    = '''SELECT * 
+                      FROM note_label
+                      WHERE user_id = %s
+                      ORDER BY id desc''' % user_id
+        labels = Label.objects.raw(query)
+        serializer = LabelSerializer(labels, many = True)
+        return Response({"data":serializer.data,"code":200, "msg":response_code[200]})
+
