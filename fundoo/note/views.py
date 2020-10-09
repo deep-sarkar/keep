@@ -23,7 +23,7 @@ class CreateNote(GenericAPIView):
             serializer = NoteSerializer(data = request.data)
             if serializer.is_valid():
                 instance = serializer.save(user = request.user)
-                if len(labels) != None:
+                if labels != None:
                     for label in labels:
                         try:
                             single_label = Label.objects.get(name = label, user = request.user.id)
@@ -98,8 +98,8 @@ class EditNote(GenericAPIView):
             serializer = EditNoteSerializer(note, data=request.data, partial=True)
             if serializer.is_valid():
                 instance = serializer.save(user = request.user)
-                delete_existing_relation = LabelMap.objects.filter(note = instance).delete()
-                if len(labels) != None:
+                if labels != None:
+                    delete_existing_relation = LabelMap.objects.filter(note = instance).delete()
                     for label in labels:
                         try:
                             single_label = Label.objects.get(name = label, user = request.user.id)
@@ -107,12 +107,11 @@ class EditNote(GenericAPIView):
                             single_label = Label.objects.create(name = label, user = request.user)
                         try:
                             LabelMap.objects.get(label=single_label, note = instance)
-                        except Exception as e:
+                        except ObjectDoesNotExist:
                             LabelMap.objects.create(label=single_label, note = instance)
                 return Response({"data":serializer.data,"code":200, "msg":response_code[200]})
             return Response({"code":300, "msg":response_code[300]})
         except Exception as e:
-            print(e)
             return Response({"code":416, "msg":response_code[416]})
 
 class TrashNote(GenericAPIView):
@@ -128,6 +127,22 @@ class TrashNote(GenericAPIView):
         notes = Note.objects.raw(query)
         serializer = EditNoteSerializer(notes, many=True)
         return Response({"data":serializer.data, "code":200, "msg":response_code[200]})
+
+class ArchiveNote(GenericAPIView):
+    serializer_class = EditNoteSerializer
+
+    @method_decorator(login_required)
+    def get(self, request, *args, **kwargs):
+        user_id = request.user.id
+        query = '''SELECT *
+                   FROM note_note
+                   WHERE (archive = true) and (trash = false) and (user_id = %s) 
+                   ORDER BY id desc''' %user_id
+        notes = Note.objects.raw(query)
+        serializer = EditNoteSerializer(notes, many=True)
+        return Response({"data":serializer.data, "code":200, "msg":response_code[200]})
+
+
 
 class CreateLabel(GenericAPIView):
     serializer_class = LabelSerializer
