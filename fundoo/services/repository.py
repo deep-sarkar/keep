@@ -66,5 +66,18 @@ def get_all_label(user_id):
                         WHERE user_id = %s
                         ORDER BY id desc''' % user_id
         labels = Label.objects.raw(query)
+        return labels
     except Exception:
         raise labelsNotFoundError(code=308, msg=response_code[308])
+
+def delete_label_and_relation(id, user_id):
+    try:
+        label = Label.objects.get(id = id, user_id =user_id)
+        mapped_notes = LabelMap.objects.filter(label_id = id)
+        if mapped_notes != None:
+            mapped_notes.delete()
+            label.delete()
+            return True
+    except Exception:
+        pass
+    return False
