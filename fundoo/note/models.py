@@ -7,7 +7,7 @@ class Label(models.Model):
     name = models.CharField(max_length = 20, blank=True, null=True)
 
     class Meta:
-        unique_together = [['user','name']]
+        unique_together = [['name','user']]
 
     def __str__(self):
         return self.name
@@ -22,7 +22,7 @@ class Note(models.Model):
     trash     = models.BooleanField(default=False)
     pin       = models.BooleanField(default=False)
     color     = models.CharField(max_length = 7, default = '#ffffff')
-    labels    = models.ManyToManyField(Label, through='LabelMap',related_name='label', blank=True)
+    labels    = models.ManyToManyField(Label, through='LabelMap', related_name='label')
 
     def __str__(self):
         return self.title
@@ -31,9 +31,7 @@ class Note(models.Model):
 class LabelMap(models.Model):
     note  = models.ForeignKey(Note, on_delete = models.CASCADE)
     label = models.ForeignKey(Label, on_delete = models.DO_NOTHING)
-
-    def __str__(self):
-        return super().__str__()
+    
 
     class Meta:
         unique_together = [['note','label']]
