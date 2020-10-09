@@ -1,10 +1,5 @@
 from rest_framework import serializers
-from note.models import Note, Label
-
-class LabelSerializer(serializers.ModelSerializer):
-    class Meta:
-        model  = Label
-        fields = '__all__'
+from note.models import Note
 
 class NoteSerializer(serializers.ModelSerializer):
     class Meta:
