@@ -36,3 +36,14 @@ def get_all_note(user_id):
         return notes
     except Exception:
         raise NotesNotFoundError(409, response_code[409])
+
+def get_all_trash_note(user_id):
+    try:
+        query = '''SELECT * 
+                    FROM note_note 
+                    WHERE (trash = true) and (user_id=%s) 
+                    ORDER BY pin desc, id desc''' % user_id
+        notes = Note.objects.raw(query)
+        return notes
+    except Exception:
+        raise NotesNotFoundError(409, response_code[409])
