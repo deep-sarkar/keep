@@ -1,8 +1,8 @@
 from rest_framework.generics import GenericAPIView
 from rest_framework.response import Response
 from django.contrib.auth.models import User
-from note.models import Note, Label
-from note.serializers import NoteSerializer, EditNoteSerializer, GetNoteSerializer
+from note.models import Note, Label, LabelMap
+from note.serializers import NoteSerializer, EditNoteSerializer, GetNoteSerializer, LabelSerializer
 from status import response_code
 from django.utils.decorators import method_decorator
 from django.contrib.auth.decorators import login_required
@@ -16,13 +16,26 @@ class CreateNote(GenericAPIView):
         try:
             if not request.user.is_authenticated:
                 return Response({"code":413, "msg":response_code[413]})
-            data = request.data
-            serializer = NoteSerializer(data = data)
+            try:
+                labels = request.data.get('labels')
+            except KeyError:
+                pass
+            serializer = NoteSerializer(data = request.data)
             if serializer.is_valid():
-                serializer.save(user = request.user)
-                return Response({"code":201, "msg":response_code[201]})
+                instance = serializer.save(user = request.user)
+                if len(labels) != None:
+                    for label in labels:
+                        try:
+                            single_label = Label.objects.get(name = label, user = request.user.id)
+                        except ObjectDoesNotExist:
+                            single_label = Label.objects.create(name = label, user = request.user)
+                        try:
+                            LabelMap.objects.create(label=single_label, note = instance)
+                        except Exception as e:
+                            return Response({"code":417, "msg":response_code[417]})
+                    return Response({"code":201, "msg":response_code[201]})
             return Response({"code":300, "msg":response_code[300]})
-        except Exception as e:
+        except Exception:
             return Response({"code":416, "msg":response_code[416]})
 
 
@@ -78,12 +91,28 @@ class EditNote(GenericAPIView):
                 note       = self.get_object(id)
             except RequestObjectDoesNotExixts as e:
                 return Response({'code':e.code, 'msg':e.msg})
+            try:
+                labels = request.data.get('labels')
+            except KeyError:
+                pass
             serializer = EditNoteSerializer(note, data=request.data, partial=True)
             if serializer.is_valid():
-                serializer.save(user = request.user)
+                instance = serializer.save(user = request.user)
+                delete_existing_relation = LabelMap.objects.filter(note = instance).delete()
+                if len(labels) != None:
+                    for label in labels:
+                        try:
+                            single_label = Label.objects.get(name = label, user = request.user.id)
+                        except ObjectDoesNotExist:
+                            single_label = Label.objects.create(name = label, user = request.user)
+                        try:
+                            LabelMap.objects.get(label=single_label, note = instance)
+                        except Exception as e:
+                            LabelMap.objects.create(label=single_label, note = instance)
                 return Response({"data":serializer.data,"code":200, "msg":response_code[200]})
             return Response({"code":300, "msg":response_code[300]})
-        except Exception:
+        except Exception as e:
+            print(e)
             return Response({"code":416, "msg":response_code[416]})
 
 class TrashNote(GenericAPIView):
@@ -99,3 +128,19 @@ class TrashNote(GenericAPIView):
         notes = Note.objects.raw(query)
         serializer = EditNoteSerializer(notes, many=True)
         return Response({"data":serializer.data, "code":200, "msg":response_code[200]})
+
+class CreateLabel(GenericAPIView):
+    serializer_class = LabelSerializer
+
+    @method_decorator(login_required)
+    def post(self, request, *args, **kwargs):
+        name = request.data.get('name')
+        user = request.user
+        try:
+            label = Label.objects.get(name = name, user = user)
+            return Response({"code":307, "msg":response_code[307]})
+        except ObjectDoesNotExist:
+            label = Label.objects.create(name = name, user = user)
+            return Response({"code":201, "msg":response_code[201]})
+        return Response({"code":300, "msg":response_code[300]})
+
