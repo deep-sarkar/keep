@@ -26,7 +26,8 @@ from django.core.exceptions import ObjectDoesNotExist
 
 # Repository
 from services.repository import ( add_label_id_from_label,
-                                  get_all_note
+                                  get_all_note,
+                                  edit_label_id_from_label,
                                 )
 
 class CreateNote(GenericAPIView):
@@ -110,15 +111,7 @@ class EditNote(GenericAPIView):
                 instance = serializer.save(user = request.user)
                 if labels != None:
                     delete_existing_relation = LabelMap.objects.filter(note = instance).delete()
-                    for label in labels:
-                        try:
-                            single_label = Label.objects.get(name = label, user = request.user.id)
-                        except ObjectDoesNotExist:
-                            single_label = Label.objects.create(name = label, user = request.user)
-                        try:
-                            LabelMap.objects.get(label=single_label, note = instance)
-                        except ObjectDoesNotExist:
-                            LabelMap.objects.create(label=single_label, note = instance)
+                    edit_label_id_from_label(labels, instance, request.user)
                 return Response({"data":serializer.data,"code":200, "msg":response_code[200]})
             return Response({"code":300, "msg":response_code[300]})
         except Exception as e:
