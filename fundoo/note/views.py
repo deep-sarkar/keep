@@ -1,14 +1,28 @@
+# View
 from rest_framework.generics import GenericAPIView
 from rest_framework.response import Response
+
+# Models
 from django.contrib.auth.models import User
 from note.models import Note, LabelMap
 from label.models import Label
+
+# Serializer
 from note.serializers import NoteSerializer, EditNoteSerializer, GetNoteSerializer
+
+# Response
 from util.status import response_code
+
+# Decorator
 from django.utils.decorators import method_decorator
 from django.contrib.auth.decorators import login_required
-from note.exceptions import RequestObjectDoesNotExixts
+
+# Exceptions
+from note.exceptions import RequestObjectDoesNotExixts, LabelMappingException
 from django.core.exceptions import ObjectDoesNotExist
+
+# Repository
+from services.repository import add_label_id_from_label
 
 class CreateNote(GenericAPIView):
     serializer_class = NoteSerializer
@@ -25,15 +39,10 @@ class CreateNote(GenericAPIView):
             if serializer.is_valid():
                 instance = serializer.save(user = request.user)
                 if labels != None:
-                    for label in labels:
-                        try:
-                            single_label = Label.objects.get(name = label, user = request.user.id)
-                        except ObjectDoesNotExist:
-                            single_label = Label.objects.create(name = label, user = request.user)
-                        try:
-                            LabelMap.objects.create(label=single_label, note = instance)
-                        except Exception as e:
-                            return Response({"code":417, "msg":response_code[417]})
+                    try:
+                        add_label_id_from_label(labels, instance, request.user)
+                    except LabelMappingException as e:
+                        return Response({"code":e.code, "msg":e.msg})
                     return Response({"code":201, "msg":response_code[201]})
             return Response({"code":300, "msg":response_code[300]})
         except Exception:
