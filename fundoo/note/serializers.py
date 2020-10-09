@@ -1,10 +1,10 @@
 from rest_framework import serializers
 from note.models import Note, Label
 
-# class LabelSerializer(serializers.ModelSerializer):
-#     class Meta:
-#         model  = Label
-#         fields = '__all__'
+class LabelSerializer(serializers.ModelSerializer):
+    class Meta:
+        model  = Label
+        fields = 'name'
 
 class NoteSerializer(serializers.ModelSerializer):
     class Meta:
@@ -20,7 +20,7 @@ class GetNoteSerializer(serializers.ModelSerializer):
         read_only_fields = ['id', 'user', 'trash']
 
 class EditNoteSerializer(serializers.ModelSerializer):
-    labels = serializers.StringRelatedField(many=True)
+    labels = serializers.StringRelatedField(many=True, read_only = True)
     class Meta:
         model            = Note
         fields           = "__all__"
