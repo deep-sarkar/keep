@@ -9,7 +9,7 @@ from label.serializers import LabelSerializer
 from rest_framework.response import Response
 from rest_framework.generics import GenericAPIView
 from note.models import LabelMap
-from services.repository import get_all_label
+from services.repository import get_all_label, delete_label_and_relation
 
 class CreateLabel(GenericAPIView):
     serializer_class = LabelSerializer
@@ -86,12 +86,10 @@ class DeleteLabel(GenericAPIView):
         try:
             user_id = request.user.id
             try:
-                label = Label.objects.get(id = id, user_id =user_id)
-                mapped_notes = LabelMap.objects.filter(label_id = id)
-                if mapped_notes != None:
-                    mapped_notes.delete()
-                    label.delete()
-                return Response({"code":200, "msg":response_code[200]})
+                delete_label = delete_label_and_relation(id, user_id)
+                if delete_label:
+                    return Response({"code":200, "msg":response_code[200]})
+                return Response({"code":416, "msg":response_code[416]})
             except ObjectDoesNotExist:
                 return Response({"code":308, "msg":response_code[308]})
         except Exception:
