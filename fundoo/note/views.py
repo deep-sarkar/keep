@@ -18,11 +18,16 @@ from django.utils.decorators import method_decorator
 from django.contrib.auth.decorators import login_required
 
 # Exceptions
-from note.exceptions import RequestObjectDoesNotExixts, LabelMappingException
+from note.exceptions import (RequestObjectDoesNotExixts, 
+                            LabelMappingException,
+                            NotesNotFoundError
+                            )
 from django.core.exceptions import ObjectDoesNotExist
 
 # Repository
-from services.repository import add_label_id_from_label
+from services.repository import ( add_label_id_from_label,
+                                  get_all_note
+                                )
 
 class CreateNote(GenericAPIView):
     serializer_class = NoteSerializer
@@ -55,16 +60,11 @@ class GetNote(GenericAPIView):
     @method_decorator(login_required)
     def get(self, request, *args, **kwargs):
         try:
-            user_id = request.user.id
-            query = '''SELECT * 
-                       FROM note_note 
-                       WHERE (trash = false) and (archive = false) and (user_id=%s) 
-                       ORDER BY pin desc, id desc''' % user_id
-            notes = Note.objects.raw(query)
+            notes = get_all_note(request.user.id)
             serializer = GetNoteSerializer(notes, many=True)
             return Response({"data":serializer.data, "code":200, "msg":response_code[200]})
-        except Exception:
-            return Response({"code":416, "msg":response_code[416]})
+        except NotesNotFoundError as e:
+            return Response({"code":e.code, "msg":e.msg})
 
 
 
