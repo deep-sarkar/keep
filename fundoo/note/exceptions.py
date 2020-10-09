@@ -13,3 +13,6 @@ class LabelMappingException(MyBaseException):
 
 class NotesNotFoundError(BaseException):
     pass
+
+class labelsNotFoundError(BaseException):
+    pass
