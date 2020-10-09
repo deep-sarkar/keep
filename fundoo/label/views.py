@@ -39,4 +39,39 @@ class GetLabel(GenericAPIView):
         serializer = LabelSerializer(labels, many = True)
         return Response({"data":serializer.data,"code":200, "msg":response_code[200]})
 
+class EditLabel(GenericAPIView):
+    serializer_class = LabelSerializer
 
+    def get_object(self, id=None):
+        try:
+            user_id = self.request.user.id
+            query = '''SELECT * 
+                        FROM label_label
+                        WHERE (id=%s) and (user_id=%s)''' % (id, user_id) 
+            label = Label.objects.raw(query)
+            return label[0]
+        except IndexError:
+           raise RequestObjectDoesNotExixts(code=409, msg=response_code[409])
+
+    @method_decorator(login_required)
+    def get(self, request, id=None):
+        try:
+            try:
+                label = self.get_object(id)
+            except RequestObjectDoesNotExixts as e:
+                return Response({'code':e.code, 'msg':e.msg})
+            serializer = LabelSerializer(label)
+            return Response({"data":serializer.data,"code":200, "msg":response_code[200]})
+        except Exception:
+            return Response({"code":416, "msg":response_code[416]})
+
+    def put(self, request, id=None):
+        try:
+            label = self.get_object(id)
+        except RequestObjectDoesNotExixts as e:
+            return Response({'code':e.code, 'msg':e.msg})
+        serializer = LabelSerializer(label, data = request.data, partial = True)
+        if serializer.is_valid():
+            serializer.save(user = request.user)
+            return Response({"data":serializer.data,"code":200, "msg":response_code[200]})
+        return Response({"code":300, "msg":response_code[300]})
