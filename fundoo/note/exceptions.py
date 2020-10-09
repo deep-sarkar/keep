@@ -10,3 +10,6 @@ class RequestObjectDoesNotExixts(MyBaseException):
 
 class LabelMappingException(MyBaseException):
     pass
+
+class NotesNotFoundError(BaseException):
+    pass
