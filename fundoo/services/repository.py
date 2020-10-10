@@ -15,6 +15,24 @@ def add_label_id_from_label(labels, instance, user):
         except Exception:
             raise LabelMappingException(code=417, msg=response_code[417])
 
+def edit_label_id_from_label(labels, instance, user):
+    for label in labels:
+        try:
+            single_label = Label.objects.get(name = label, user = user.id)
+        except ObjectDoesNotExist:
+            single_label = Label.objects.create(name = label, user = user)
+        try:
+            LabelMap.objects.get(label=single_label, note = instance)
+        except ObjectDoesNotExist:
+            LabelMap.objects.create(label=single_label, note = instance)
+
+def get_single_note(id, user_id):
+    query = '''SELECT * 
+                FROM note_note 
+                WHERE (id=%s) and (user_id=%s)''' % (id, user_id) 
+    note = Note.objects.raw(query)
+    return note[0]
+
 def get_all_note(user_id):
     try:
         query = '''SELECT * 
@@ -48,16 +66,6 @@ def get_all_archive_note(user_id):
     except Exception:
         raise NotesNotFoundError(409, response_code[409])
 
-def edit_label_id_from_label(labels, instance, user):
-    for label in labels:
-        try:
-            single_label = Label.objects.get(name = label, user = user.id)
-        except ObjectDoesNotExist:
-            single_label = Label.objects.create(name = label, user = user)
-        try:
-            LabelMap.objects.get(label=single_label, note = instance)
-        except ObjectDoesNotExist:
-            LabelMap.objects.create(label=single_label, note = instance)
 
 def get_all_label(user_id):
     try:
