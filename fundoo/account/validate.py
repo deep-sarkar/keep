@@ -1,40 +1,37 @@
-from .exceptions import (PasswordDidntMatched,
-                        PasswordPatternMatchError, 
+from django.core.validators import validate_email
+from account.exceptions import (PasswordDidntMatched, 
+                        PasswordPatternMatchError,
                         UsernameAlreadyExistsError,
                         EmailAlreadyExistsError,
                         UsernameDoesNotExistsError,
+                        EmailDoesNotExistsError
                         )
+from django.core.exceptions import ValidationError
 from util.status import response_code
-from django.contrib.auth import get_user_model
+from account.validation_function import *
+                        
 
-
-User = get_user_model()
-
-
-#Regex
-import re
-
-def validate_password_match(password1,password2):
-    if password1 != password2:
-        raise PasswordDidntMatched(code=403,msg=response_code[403])
-
-def validate_password_pattern_match(password):
-    if not re.search('^[a-zA-Z0-9]{8,}$',password):
-        raise PasswordPatternMatchError(code=406,msg=response_code[406])
-
-def validate_duplicat_username_existance(username):
-    if User.objects.filter(username=username).exists():
-        raise UsernameAlreadyExistsError(code=401,msg=response_code[401])
-
-def validate_duplicate_email_existance(email):
-    if User.objects.filter(email=email).exists():
-        raise EmailAlreadyExistsError(code=408,msg=response_code[408])
-
-def validate_user_does_not_exists(username):
-    if not User.objects.filter(username=username).exists():
-        raise UsernameDoesNotExistsError(code=409,msg=response_code[409])
-
-def validate_email_does_not_exists(username):
-    if not User.objects.filter(username=username).exists():
-        raise UsernameDoesNotExistsError(code=409,msg=response_code[409])
-        
+def validate_registration(request):
+    first_name           = request.data.get('first_name')
+    last_name            = request.data.get('last_name')
+    username             = request.data.get('username')
+    email                = request.data.get('email')
+    password             = request.data.get('password')
+    confirm     = request.data.get('confirm')
+    try:
+        validate_email(email)
+        validate_password_match(password, confirm)
+        validate_password_pattern_match(password)
+        validate_duplicat_username_existance(username)
+        validate_duplicate_email_existance(email)
+    except ValidationError:
+        return {'code':404,'msg':response_code[404]}        
+    except PasswordDidntMatched as e:
+        return {"code":e.code,"msg":e.msg}
+    except PasswordPatternMatchError as e:
+        return {"code":e.code,"msg":e.msg}
+    except UsernameAlreadyExistsError as e:
+        return {"code":e.code,"msg":e.msg}
+    except EmailAlreadyExistsError as e:
+        return {"code":e.code,"msg":e.msg}
+    
