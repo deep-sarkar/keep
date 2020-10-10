@@ -29,7 +29,9 @@ from services.repository import ( add_label_id_from_label,
                                   get_all_note,
                                   edit_label_id_from_label,
                                   get_all_trash_note,
-                                  get_all_archive_note
+                                  get_all_archive_note,
+                                  get_single_note,
+
                                 )
 
 class CreateNote(GenericAPIView):
@@ -76,12 +78,8 @@ class EditNote(GenericAPIView):
 
     def get_object(self,id):
         try:
-            user_id = self.request.user.id
-            query = '''SELECT * 
-                        FROM note_note 
-                        WHERE (id=%s) and (user_id=%s)''' % (id, user_id) 
-            note = Note.objects.raw(query)
-            return note[0]
+            note = get_single_note(id, self.request.user.id)
+            return note
         except IndexError:
            raise RequestObjectDoesNotExixts(code=409, msg=response_code[409])
 
