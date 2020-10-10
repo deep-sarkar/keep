@@ -77,12 +77,12 @@ class Registration(GenericAPIView):
     def post(self, request, *args, **kwargs):
         if request.user.is_authenticated:
             return Response({'code':410,'msg':response_code[410]})
-        valid = validate_registration(request)
+        valid = validate_registration(request)                  #validate request data return msg if error occour
         if valid != None:
-            return Response(valid)
+            return Response(valid)  #If error occour will return error msg and code
         try:
-            create_user(request)
-            send_account_activation_mail(request)
+            create_user(request)                                            #will create user
+            send_account_activation_mail(request)                           #Sending account activation mail
         except UserCreationError as e:
             return Response({'code':e.code,'msg':e.msg})
         except SMTPException:
@@ -99,9 +99,9 @@ class LoginAPIView(GenericAPIView):
             return Response({'code':410,'msg':response_code[410]})
         username = request.data.get('username')
         password = request.data.get('password')
-        valid = validate_login(request)
+        valid = validate_login(request)                                             #validate request data
         if valid != None:
-            return Response(valid)
+            return Response(valid)                         #If error occour will return error msg and code
         user_obj = authenticate(request, username=username, password=password)
         if user_obj is not None:
             if user_obj.is_active:
@@ -120,7 +120,7 @@ class Logout(GenericAPIView):
         if not request.user.is_authenticated:
             return Response({'code':413, 'msg':response_code[413]})
         username = request.user.username
-        redis.delete_attribute(username)
+        redis.delete_attribute(username)     #delete token from redis
         logout(request)
         return Response({'code':200,'msg':response_code[200]})
 
@@ -130,9 +130,9 @@ class ChangePasswordView(GenericAPIView):
     def post(self, request, *args, **kwargs):
         if not request.user.is_authenticated:
             return Response({'code':413, 'msg':response_code[413]})
-        valid = validate_change_password(request)
+        valid = validate_change_password(request)  #validate request data
         if valid != None:
-            return Response(valid)
+            return Response(valid)   #If error occour will return error msg and code
         username         = request.user.username
         password         = request.data.get('password')
         password_set = set_new_password(username, password)
@@ -195,10 +195,10 @@ class ResetNewPassword(GenericAPIView):
             token_obj = ShortURL.objects.get(surl=surl)
         except Exception:
             return Response({'code':409,'msg':response_code[409]})
-        token = token_obj.lurl
+        token = token_obj.lurl   #get token from token object
         username = validate_reset_password(token,request)
         if type(username) != str:
-            return Response(username)
+            return Response(username)   #If error occour will return error msg and code
         password = request.data.get('password')
         password_set = set_new_password(username, password)
         if password_set:
