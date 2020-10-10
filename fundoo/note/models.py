@@ -13,6 +13,7 @@ class Note(models.Model):
     pin       = models.BooleanField(default=False)
     color     = models.CharField(max_length = 7, default = '#ffffff')
     labels    = models.ManyToManyField(Label, through='LabelMap', related_name='label')
+    collaborators = models.ManyToManyField(User, through='UserMap', related_name='user')
 
     def __str__(self):
         return self.title
@@ -25,3 +26,10 @@ class LabelMap(models.Model):
 
     class Meta:
         unique_together = [['note','label']]
+
+class UserMap(models.Model):
+    user = models.ForeignKey(User, on_delete=models.DO_NOTHING)
+    note = models.ForeignKey(Note, on_delete=models.DO_NOTHING)
+
+    class Meta:
+        unique_together = [['note','user']]
