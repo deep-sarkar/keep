@@ -25,7 +25,7 @@ from .serializers import (RegistrationSerializer,
                           ForgotPasswordSerializer)
 
 #token
-from .jwt_token import generate_token
+from account.services.token_service import generate_token
 
 #errors
 from django.core.exceptions import ValidationError, ObjectDoesNotExist
@@ -34,7 +34,8 @@ from .exceptions import (PasswordDidntMatched,
                         UsernameAlreadyExistsError,
                         EmailAlreadyExistsError,
                         UsernameDoesNotExistsError,
-                        EmailDoesNotExistsError
+                        EmailDoesNotExistsError,
+                        UserCreationError
                         )
 from smtplib import SMTPException
 
@@ -42,13 +43,18 @@ from smtplib import SMTPException
 import re
 
 #validator
-from .validate import (validate_password_match,
+from .validation_function import (validate_password_match,
                        validate_password_pattern_match,
                        validate_duplicat_username_existance,
                        validate_duplicate_email_existance,
                        validate_user_does_not_exists,
                        validate_email_does_not_exists,
                       )   
+
+from account.validate import validate_registration
+
+from account.services.email_services import send_account_activation_mail
+from account.services.repository import create_user
 
 from rest_framework_jwt.settings import api_settings
 import jwt
@@ -76,59 +82,14 @@ class Registration(GenericAPIView):
     def post(self, request, *args, **kwargs):
         if request.user.is_authenticated:
             return Response({'code':410,'msg':response_code[410]})
-        first_name           = request.data.get('first_name')
-        last_name            = request.data.get('last_name')
-        username             = request.data.get('username')
-        email                = request.data.get('email')
-        password             = request.data.get('password')
-        confirm     = request.data.get('confirm')
+        valid = validate_registration(request)
+        if valid != None:
+            return Response(valid)
         try:
-            validate_email(email)
-        except ValidationError:
-            return Response({'code':404,'msg':response_code[404]})
-        try:
-            validate_password_match(password,confirm)
-            validate_password_pattern_match(password)
-        except PasswordDidntMatched as e:
-            return Response({"code":e.code,"msg":e.msg})
-        except PasswordPatternMatchError as e:
-            return Response({"code":e.code,"msg":e.msg})
-        try:
-            validate_duplicat_username_existance(username)
-        except UsernameAlreadyExistsError as e:
-            return Response({"code":e.code,"msg":e.msg})
-        try:
-            validate_duplicate_email_existance(email)
-        except EmailAlreadyExistsError as e:
-            return Response({"code":e.code,"msg":e.msg})
-        user_obj = User.objects.create_user(first_name=first_name,
-                                       last_name=last_name,
-                                       username=username,
-                                       email=email ,
-                                       password=password
-                                        )
-        user_obj.is_active = False
-        user_obj.save()
-        payload = {
-            'username':username,
-            'password':password
-        }
-        token       = generate_token(payload)
-        surl        = get_surl(str(token)) 
-        final_url   = surl.split('/')
-        curren_site = get_current_site(request)
-        domain      = curren_site.domain
-        subject     = static_data.ACCOUNT_ACTIVATION_SUBJECT
-        msg = render_to_string(
-                'account/account_activation.html',
-                {
-                    'username': username, 
-                    'domain': domain,
-                    'surl': final_url[2],
-                })
-        try:
-            send_mail(subject, msg, EMAIL_HOST_USER,
-                        [email], fail_silently=False)
+            create_user(request)
+            send_account_activation_mail(request)
+        except UserCreationError as e:
+            return Response({'code':e.code,'msg':e.msg})
         except SMTPException:
             return Response({'code':301,'msg':response_code[301]})
         return Response({"code":201, "msg":response_code[201]})
