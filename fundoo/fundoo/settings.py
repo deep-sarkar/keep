@@ -163,3 +163,8 @@ JWT_AUTH = {
     # 'JWT_ALLOW_REFRESH': True,
     # 'JWT_EXPIRATION_DELTA': datetime.timedelta(days=3),
 }
+
+
+CELERY_BROKER_URL = 'redis://localhost:6379/4'
+CELERY_TASK_SERIALIZER = 'json'
+CELERY_ACCEPT_CONTENT = ['json']
