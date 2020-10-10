@@ -34,4 +34,14 @@ def validate_registration(request):
         return {"code":e.code,"msg":e.msg}
     except EmailAlreadyExistsError as e:
         return {"code":e.code,"msg":e.msg}
-    
+
+def validate_login(request):
+    username = request.data.get('username')
+    password = request.data.get('password')
+    try:
+        validate_user_does_not_exists(username)
+        validate_password_pattern_match(password)
+    except UsernameDoesNotExistsError as e:
+        return {'code':e.code,'msg':e.msg}
+    except PasswordPatternMatchError as e :
+        return {'code':e.code,'msg':e.msg}
