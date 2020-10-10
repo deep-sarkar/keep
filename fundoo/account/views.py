@@ -39,18 +39,8 @@ from .exceptions import (PasswordDidntMatched,
                         )
 from smtplib import SMTPException
 
-#regular expression
-import re
-
 #validator
-from .validation_function import (validate_password_match,
-                       validate_password_pattern_match,
-                       validate_duplicat_username_existance,
-                       validate_duplicate_email_existance,
-                       validate_user_does_not_exists,
-                       validate_email_does_not_exists,
-                      )   
-
+from .validation_function import validate_user_does_not_exists
 from account.validate import( validate_registration, 
                               validate_login, 
                               validate_reset_password,
