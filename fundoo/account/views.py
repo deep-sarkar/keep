@@ -51,10 +51,14 @@ from .validation_function import (validate_password_match,
                        validate_email_does_not_exists,
                       )   
 
-from account.validate import validate_registration, validate_login
+from account.validate import( validate_registration, 
+                              validate_login, 
+                              validate_reset_password,
+                              )
 
 from account.services.email_services import send_account_activation_mail, send_forgot_password_mail
-from account.services.repository import create_user
+from account.services.repository import (create_user,
+                                          set_new_password)
 
 from rest_framework_jwt.settings import api_settings
 import jwt
@@ -129,7 +133,7 @@ class Logout(GenericAPIView):
         logout(request)
         return Response({'code':200,'msg':response_code[200]})
 
-class ResetPasswordView(GenericAPIView):
+class ChangePasswordView(GenericAPIView):
     serializer_class = ResetPasswordSerializer
 
     def post(self, request, *args, **kwargs):
@@ -137,7 +141,7 @@ class ResetPasswordView(GenericAPIView):
             return Response({'code':413, 'msg':response_code[413]})
         username         = self.request.user.username
         password         = request.data.get('password')
-        confirm_password = request.data.get('confirm_password')
+        confirm_password = request.data.get('confirm')
         try:
             validate_password_pattern_match(password)
             validate_password_match(password,confirm_password)
@@ -199,56 +203,22 @@ class ForgotPasswordView(GenericAPIView):
         except SMTPException:
             return Response({'code':301,'msg':response_code[301]})
 
-class CheckUserExistance(GenericAPIView):
-    serializer_class = LoginSerializer
-
-    def get(self, request, surl):
-        try:
-            token_obj = ShortURL.objects.get(surl=surl)
-        except Exception:
-            return Response({'code':409,'msg':response_code[409]})
-        token = token_obj.lurl
-        try:
-            decode = jwt.decode(token,'SECRET_KEY')
-        except jwt.DecodeError:
-            return Response({'code':304,'msg':response_code[304]})
-        username = decode['username']
-        user = User.objects.get(username=username)
-        if user is not None:
-            return Response({'code':203,'msg':response_code[203]})
-        else:
-            return Response({'code':306,'msg':response_code[306]})
-
-   
 class ResetNewPassword(GenericAPIView):
     serializer_class = ResetPasswordSerializer
 
-    def post(self, request):
-        surl= request.data.get('surl')
+    def post(self, request, *args, **kwargs):
+        surl= kwargs.get('surl')
         try:
             token_obj = ShortURL.objects.get(surl=surl)
         except Exception:
             return Response({'code':409,'msg':response_code[409]})
         token = token_obj.lurl
-        try:
-            decode = jwt.decode(token,'SECRET_KEY')
-        except jwt.DecodeError:
-            return Response({'code':304,'msg':response_code[304]})
-        username = decode['username']
-        password         = request.data.get('password')
-        confirm_password = request.data.get('confirm_password')
-        try:
-            validate_password_match(password, confirm_password)
-            validate_password_pattern_match(password)
-        except PasswordDidntMatched as e:
-            return Response({"code":e.code,"msg":e.msg})
-        except PasswordPatternMatchError as e:
-            return Response({"code":e.code,"msg":e.msg})
-        user = User.objects.get(username__exact=username)
-        if user is not None:
-            user.set_password(password)
-            user.save()
-            return Response({'code':200,'msg':response_code[200]})
-        return Response({'code':409,'msg':response_code[409]})
+        username = validate_reset_password(token,request)
+        if type(username) != str:
+            return Response(username)
+        password = request.data.get('password')
+        set_new_password(username, password)
+        return Response({'code':200,'msg':response_code[200]})
+        
 
  
