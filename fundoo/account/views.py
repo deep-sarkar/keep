@@ -51,7 +51,7 @@ from .validation_function import (validate_password_match,
                        validate_email_does_not_exists,
                       )   
 
-from account.validate import validate_registration
+from account.validate import validate_registration, validate_login
 
 from account.services.email_services import send_account_activation_mail
 from account.services.repository import create_user
@@ -104,13 +104,9 @@ class LoginAPIView(GenericAPIView):
             return Response({'code':410,'msg':response_code[410]})
         username = request.data.get('username')
         password = request.data.get('password')
-        try:
-            validate_user_does_not_exists(username)
-            validate_password_pattern_match(password)
-        except UsernameDoesNotExistsError as e:
-            return Response({'code':e.code,'msg':e.msg})
-        except PasswordPatternMatchError as e :
-            return Response({'code':e.code,'msg':e.msg})
+        valid = validate_login(request)
+        if valid != None:
+            return Response(valid)
         user_obj = authenticate(request, username=username, password=password)
         if user_obj is not None:
             if user_obj.is_active:
@@ -129,9 +125,6 @@ class Logout(GenericAPIView):
         if not request.user.is_authenticated:
             return Response({'code':413, 'msg':response_code[413]})
         username = request.user.username
-        user_id  = request.user.id
-        cache_key = str(username)+str(user_id)
-        cache.delete(cache_key)
         redis.delete_attribute(username)
         logout(request)
         return Response({'code':200,'msg':response_code[200]})
