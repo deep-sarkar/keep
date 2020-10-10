@@ -5,18 +5,10 @@ from rest_framework.response import Response
 from django.contrib.auth import get_user_model, login, logout, authenticate
 from django.core.validators import validate_email
 from django.template.loader import render_to_string
-from django.shortcuts import redirect, HttpResponse, render
 
 
 #Short url
-from django_short_url.views import get_surl
 from django_short_url.models import ShortURL
-
-#mailing
-from django.core.mail import send_mail
-from django.contrib.sites.shortcuts import get_current_site
-from fundoo.settings import EMAIL_HOST_USER
-
 
 #import from serializers
 from .serializers import (RegistrationSerializer, 
@@ -29,14 +21,8 @@ from account.services.token_service import generate_token
 
 #errors
 from django.core.exceptions import ValidationError, ObjectDoesNotExist
-from .exceptions import (PasswordDidntMatched, 
-                        PasswordPatternMatchError,
-                        UsernameAlreadyExistsError,
-                        EmailAlreadyExistsError,
-                        UsernameDoesNotExistsError,
-                        EmailDoesNotExistsError,
-                        UserCreationError
-                        )
+from .exceptions import UserCreationError, UsernameDoesNotExistsError
+                        
 from smtplib import SMTPException
 
 #validator
@@ -59,7 +45,6 @@ User = get_user_model()
 
 #redis object
 from . import redis
-from django.core.cache import cache
 
 #Static data
 from util import static_data
@@ -68,7 +53,6 @@ from util.status import response_code
 jwt_encode_handler = api_settings.JWT_ENCODE_HANDLER
 jwt_payload_handler = api_settings.JWT_PAYLOAD_HANDLER
 
-#Home
 
 class Registration(GenericAPIView):
     serializer_class = RegistrationSerializer
