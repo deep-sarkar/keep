@@ -63,4 +63,18 @@ def validate_reset_password(token, request):
     except PasswordPatternMatchError as e:
         return {"code":e.code,"msg":e.msg}
     return username
-    
+
+def validate_change_password(request):
+    username         = request.user.username
+    password         = request.data.get('password')
+    confirm_password = request.data.get('confirm')
+    try:
+        validate_password_pattern_match(password)
+        validate_password_match(password,confirm_password)
+        validate_user_does_not_exists(username)
+    except PasswordDidntMatched as e:
+        return {"code":e.code,"msg":e.msg}
+    except PasswordPatternMatchError as e:
+        return {"code":e.code,"msg":e.msg}
+    except UsernameDoesNotExistsError as e:
+        return {'code':e.code,'msg':e.msg}
