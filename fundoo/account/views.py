@@ -54,6 +54,7 @@ from .validation_function import (validate_password_match,
 from account.validate import( validate_registration, 
                               validate_login, 
                               validate_reset_password,
+                              validate_change_password
                               )
 
 from account.services.email_services import send_account_activation_mail, send_forgot_password_mail
@@ -139,23 +140,15 @@ class ChangePasswordView(GenericAPIView):
     def post(self, request, *args, **kwargs):
         if not request.user.is_authenticated:
             return Response({'code':413, 'msg':response_code[413]})
-        username         = self.request.user.username
+        valid = validate_change_password(request)
+        if valid != None:
+            return Response(valid)
+        username         = request.user.username
         password         = request.data.get('password')
-        confirm_password = request.data.get('confirm')
-        try:
-            validate_password_pattern_match(password)
-            validate_password_match(password,confirm_password)
-            validate_user_does_not_exists(username)
-        except PasswordDidntMatched as e:
-            return Response({"code":e.code,"msg":e.msg})
-        except PasswordPatternMatchError as e:
-            return Response({"code":e.code,"msg":e.msg})
-        except UsernameDoesNotExistsError as e:
-            return Response({'code':e.code,'msg':e.msg})
-        user = User.objects.get(username=username)
-        user.set_password(password)
-        user.save()
-        return Response({'code':200, 'msg':response_code[200]})
+        password_set = set_new_password(username, password)
+        if password_set:
+            return Response({'code':200,'msg':response_code[200]})
+        return Response({'code':416,'msg':response_code[416]})
         
 class ActivateAccount(GenericAPIView):
     serializer_class = LoginSerializer
@@ -217,8 +210,9 @@ class ResetNewPassword(GenericAPIView):
         if type(username) != str:
             return Response(username)
         password = request.data.get('password')
-        set_new_password(username, password)
-        return Response({'code':200,'msg':response_code[200]})
-        
+        password_set = set_new_password(username, password)
+        if password_set:
+            return Response({'code':200,'msg':response_code[200]})
+        return Response({'code':416,'msg':response_code[416]})
 
  
