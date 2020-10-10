@@ -21,3 +21,11 @@ def create_user(request):
         user_obj.save()
     except Exception:
         raise UserCreationError(code=309,msg=response_code[309])
+
+def set_new_password(username, password):
+    user = User.objects.get(username__exact=username)
+    if user is not None:
+        user.set_password(password)
+        user.save()
+        return True
+    return False
