@@ -28,5 +28,6 @@ response_code = {
     414 : "Invalid operation",
     415 : "Enter upcoming time",
     416 : "Something went wrong. Pleaase Try again",
-    417 : "Error occoured while mapping label"
+    417 : "Error occoured while mapping label",
+    418 : "Error occoured while mapping collaborators"
 }
