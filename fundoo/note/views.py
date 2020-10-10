@@ -4,7 +4,7 @@ from rest_framework.response import Response
 
 # Models
 from django.contrib.auth.models import User
-from note.models import Note, LabelMap
+from note.models import Note, LabelMap, UserMap
 from label.models import Label
 
 # Serializer
@@ -20,7 +20,8 @@ from django.contrib.auth.decorators import login_required
 # Exceptions
 from note.exceptions import (RequestObjectDoesNotExixts, 
                             LabelMappingException,
-                            NotesNotFoundError
+                            NotesNotFoundError,
+                            CollaboratorMappingException
                             )
 from django.core.exceptions import ObjectDoesNotExist
 
@@ -31,6 +32,7 @@ from services.repository import ( add_label_id_from_label,
                                   get_all_trash_note,
                                   get_all_archive_note,
                                   get_single_note,
+                                  add_collaborator_id_from_collaborator
 
                                 )
 
@@ -45,6 +47,10 @@ class CreateNote(GenericAPIView):
                 labels = request.data.get('labels')
             except KeyError:
                 pass
+            try:
+                collaborators = request.data.get('collaborators')
+            except KeyError:
+                pass
             serializer = NoteSerializer(data = request.data)
             if serializer.is_valid():
                 instance = serializer.save(user = request.user)
@@ -53,7 +59,12 @@ class CreateNote(GenericAPIView):
                         add_label_id_from_label(labels, instance, request.user)
                     except LabelMappingException as e:
                         return Response({"code":e.code, "msg":e.msg})
-                    return Response({"code":201, "msg":response_code[201]})
+                if collaborators != None:
+                    try:
+                        collab = add_collaborator_id_from_collaborator(collaborators, instance, request.user)
+                    except CollaboratorMappingException as e:
+                        return Response({"code":e.code, "msg":e.msg})
+                return Response({"code":201, "msg":response_code[201],"invalid_user":collab})
             return Response({"code":300, "msg":response_code[300]})
         except Exception:
             return Response({"code":416, "msg":response_code[416]})
