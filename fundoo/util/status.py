@@ -13,6 +13,7 @@ response_code = {
     306 : "Insufficient data",
     307 : "Label Already Exists",
     308 : "Label does not exists",
+    309 : "Error occoured while creating user",
     401 : "Username already exists",
     403 : "Password didnt matched",
     404 : "Provide valid email",  
