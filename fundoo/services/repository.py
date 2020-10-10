@@ -4,12 +4,19 @@ from django.contrib.auth.models import User
 from django.core.exceptions import ObjectDoesNotExist
 from note.exceptions import ( LabelMappingException, 
                               NotesNotFoundError, 
-                              labelsNotFoundError, 
+                              LabelsNotFoundError, 
                               CollaboratorMappingException,
                               )
 from util.status import response_code
 
 def add_label_id_from_label(labels, instance, user):
+    '''
+    input:  labels   => list of string,
+            instance => Note object instance,
+            user     => request.user
+    output: mapped list of label id to perticular note by create new relation
+    error : Lable mapping exception
+    '''
     for label in labels:
         try:
             single_label = Label.objects.get(name = label, user = user.id)
@@ -21,6 +28,13 @@ def add_label_id_from_label(labels, instance, user):
             raise LabelMappingException(code=417, msg=response_code[417])
 
 def edit_label_id_from_label(labels, instance, user):
+    '''
+    input:  labels   => list of string,
+            instance => Note object instance,
+            user     => request.user
+    output: mapped list of label id to perticular note by create new relation or by existing relation
+    error : ObjectDoesNotExist
+    '''
     for label in labels:
         try:
             single_label = Label.objects.get(name = label, user = user.id)
@@ -32,6 +46,13 @@ def edit_label_id_from_label(labels, instance, user):
             LabelMap.objects.create(label=single_label, note = instance)
 
 def add_collaborator_id_from_collaborator(collaborators, instance, user):
+    '''
+    input:  collaborators => list of string,
+            instance      => Note object instance,
+            user          => request.user
+    output: mapped list of user id to perticular note by create new relation
+    error : ObjectDoesNotExist, CollaboratorMappingException
+    '''
     invalid_user = []
     for collaborator in collaborators:
         try:
@@ -45,6 +66,11 @@ def add_collaborator_id_from_collaborator(collaborators, instance, user):
     return invalid_user
 
 def get_single_note(id, user_id):
+    '''
+    input : id      => requested note id
+            user_id => requested user id
+    output: single note
+    '''
     query = '''SELECT * 
                 FROM note_note 
                 WHERE (id=%s) and (user_id=%s)''' % (id, user_id) 
@@ -52,6 +78,11 @@ def get_single_note(id, user_id):
     return note[0]
 
 def get_all_note(user_id):
+    '''
+    input : user_id => requested user id
+    output: all note
+    error : NoteNotFoundError
+    '''
     try:
         query = '''SELECT * 
                     FROM note_note 
@@ -63,6 +94,11 @@ def get_all_note(user_id):
         raise NotesNotFoundError(409, response_code[409])
 
 def get_all_trash_note(user_id):
+    '''
+    input : user_id => requested user id
+    output: all trash note
+    error : NoteNotFoundError
+    '''
     try:
         query = '''SELECT * 
                     FROM note_note 
@@ -74,6 +110,11 @@ def get_all_trash_note(user_id):
         raise NotesNotFoundError(409, response_code[409])
 
 def get_all_archive_note(user_id):
+    '''
+    input : user_id => requested user id
+    output: all archived note
+    error : NoteNotFoundError
+    '''
     try:
         query = '''SELECT * 
                     FROM note_note 
@@ -86,6 +127,11 @@ def get_all_archive_note(user_id):
 
 
 def get_all_label(user_id):
+    '''
+    input : user_id => requested user id
+    output: all labels
+    error : LabelNotFoundError
+    '''
     try:
         query    =   '''SELECT * 
                         FROM label_label
@@ -94,9 +140,14 @@ def get_all_label(user_id):
         labels = Label.objects.raw(query)
         return labels
     except Exception:
-        raise labelsNotFoundError(code=308, msg=response_code[308])
+        raise LabelsNotFoundError(code=308, msg=response_code[308])
 
 def get_single_label(id, user_id):
+    '''
+    input : id      => label id
+            user_id => requested user id
+    output: single label
+    '''
     query = '''SELECT * 
                 FROM label_label
                 WHERE (id=%s) and (user_id=%s)''' % (id, user_id) 
@@ -104,6 +155,12 @@ def get_single_label(id, user_id):
     return label[0]
 
 def delete_label_and_relation(id, user_id):
+    '''
+    input : id      => label id
+            user_id => requested user id
+    output: boolean value on delete or error
+    error : Exception
+    '''
     try:
         label = Label.objects.get(id = id, user_id =user_id)
         mapped_notes = LabelMap.objects.filter(label_id = id)
