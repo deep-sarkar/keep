@@ -17,5 +17,5 @@ class CollaboratorMappingException(MyBaseException):
 class NotesNotFoundError(BaseException):
     pass
 
-class labelsNotFoundError(BaseException):
+class LabelsNotFoundError(BaseException):
     pass

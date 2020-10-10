@@ -3,7 +3,7 @@ from label.models import Label
 from util.status import response_code
 from django.utils.decorators import method_decorator
 from django.contrib.auth.decorators import login_required
-from note.exceptions import RequestObjectDoesNotExixts, labelsNotFoundError
+from note.exceptions import RequestObjectDoesNotExixts, LabelsNotFoundError
 from django.core.exceptions import ObjectDoesNotExist
 from label.serializers import LabelSerializer
 from rest_framework.response import Response
@@ -36,7 +36,7 @@ class GetLabel(GenericAPIView):
             labels = get_all_label(request.user.id)
             serializer = LabelSerializer(labels, many = True)
             return Response({"data":serializer.data,"code":200, "msg":response_code[200]})
-        except labelsNotFoundError as e:
+        except LabelsNotFoundError as e:
             return Response({'code':e.code, 'msg':e.msg})
 
 
