@@ -11,6 +11,9 @@ class RequestObjectDoesNotExixts(MyBaseException):
 class LabelMappingException(MyBaseException):
     pass
 
+class CollaboratorMappingException(MyBaseException):
+    pass
+
 class NotesNotFoundError(BaseException):
     pass
 
