@@ -21,3 +21,6 @@ class UsernameDoesNotExistsError(MyBaseException):
 
 class EmailDoesNotExistsError(MyBaseException):
     pass
+
+class UserCreationError(MyBaseException):
+    pass
