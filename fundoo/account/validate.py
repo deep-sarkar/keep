@@ -9,6 +9,7 @@ from account.exceptions import (PasswordDidntMatched,
 from django.core.exceptions import ValidationError
 from util.status import response_code
 from account.validation_function import *
+import jwt
                         
 
 def validate_registration(request):
@@ -45,3 +46,21 @@ def validate_login(request):
         return {'code':e.code,'msg':e.msg}
     except PasswordPatternMatchError as e :
         return {'code':e.code,'msg':e.msg}
+
+def validate_reset_password(token, request):
+    try:
+        decode = jwt.decode(token,'secret')
+    except jwt.DecodeError:
+        return {'code':304,'msg':response_code[304]}
+    username = decode['username']
+    password = request.data.get('password')
+    confirm  = request.data.get('confirm')
+    try:
+        validate_password_match(password, confirm)
+        validate_password_pattern_match(password)
+    except PasswordDidntMatched as e:
+        return {"code":e.code,"msg":e.msg}
+    except PasswordPatternMatchError as e:
+        return {"code":e.code,"msg":e.msg}
+    return username
+    
