@@ -8,7 +8,8 @@ class NoteSerializer(serializers.ModelSerializer):
         read_only_fields = ['id', 'user', 'trash']
 
 class GetNoteSerializer(serializers.ModelSerializer):
-    labels = serializers.StringRelatedField(many=True)
+    labels        = serializers.StringRelatedField(many=True)
+    collaborators = serializers.StringRelatedField(many=True)
     class Meta:
         model            = Note
         fields           = "__all__"
@@ -16,6 +17,7 @@ class GetNoteSerializer(serializers.ModelSerializer):
 
 class EditNoteSerializer(serializers.ModelSerializer):
     labels = serializers.StringRelatedField(many=True, read_only = True)
+    collaborators = serializers.StringRelatedField(many=True, read_only = True)
     class Meta:
         model            = Note
         fields           = "__all__"
