@@ -30,3 +30,24 @@ def send_account_activation_mail(request):
             })
     send_mail(subject, msg, EMAIL_HOST_USER,
                     [email], fail_silently=False)
+
+def send_forgot_password_mail(request, username):
+    email = request.data.get('email')
+    payload = {
+                'username': username,
+                }
+    token = generate_token(payload)
+    current_site = get_current_site(request)
+    domain_name = current_site.domain
+    surl = get_surl(str(token))
+    final_url = surl.split("/")
+    mail_subject = static_data.PASSWORD_RESET_MESSAGE
+    msg = render_to_string(
+        'account/forgot_password.html',
+        {
+            'username': username, 
+            'domain': domain_name,
+            'surl': final_url[2],
+            })         
+    send_mail(mail_subject, msg, EMAIL_HOST_USER,
+                [email], fail_silently=False)
