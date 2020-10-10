@@ -117,13 +117,23 @@ class EditNote(GenericAPIView):
                 labels = request.data.get('labels')
             except KeyError:
                 pass
+            try:
+                collaborators = request.data.get('collaborators')
+            except KeyError:
+                pass
             serializer = EditNoteSerializer(note, data=request.data, partial=True)
             if serializer.is_valid():
                 instance = serializer.save(user = request.user)
                 if labels != None:
                     delete_existing_relation = LabelMap.objects.filter(note = instance).delete()
                     edit_label_id_from_label(labels, instance, request.user)
-                return Response({"data":serializer.data,"code":200, "msg":response_code[200]})
+                if collaborators != None:
+                    delete_existing_user_relation = UserMap.objects.filter(note = instance).delete()
+                    try:
+                        collab = add_collaborator_id_from_collaborator(collaborators, instance, request.user)
+                    except CollaboratorMappingException as e:
+                        return Response({"code":e.code, "msg":e.msg})
+                return Response({"data":serializer.data,"code":200, "msg":response_code[200],"invalid_user":collab})
             return Response({"code":300, "msg":response_code[300]})
         except Exception as e:
             return Response({"code":416, "msg":response_code[416]})
