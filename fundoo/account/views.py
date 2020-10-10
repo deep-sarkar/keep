@@ -53,7 +53,7 @@ from .validation_function import (validate_password_match,
 
 from account.validate import validate_registration, validate_login
 
-from account.services.email_services import send_account_activation_mail
+from account.services.email_services import send_account_activation_mail, send_forgot_password_mail
 from account.services.repository import create_user
 
 from rest_framework_jwt.settings import api_settings
@@ -193,25 +193,8 @@ class ForgotPasswordView(GenericAPIView):
             username = user.values()[0]['username'] 
         except IndexError:
             return Response({'code':303,'msg':response_code[303]})
-        payload = {
-                'username': username,
-                }
-        token = generate_token(payload)
-        current_site = get_current_site(request)
-        domain_name = current_site.domain
-        surl = get_surl(str(token))
-        final_url = surl.split("/")
-        mail_subject = static_data.PASSWORD_RESET_MESSAGE
-        msg = render_to_string(
-            'account/forgot_password.html',
-            {
-                'username': username, 
-                'domain': domain_name,
-                'surl': final_url[2],
-                })
         try:            
-            send_mail(mail_subject, msg, EMAIL_HOST_USER,
-                    [email], fail_silently=False)
+            send_forgot_password_mail(request, username)
             return Response({'code':200,'msg':response_code[200]})
         except SMTPException:
             return Response({'code':301,'msg':response_code[301]})
