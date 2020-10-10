@@ -9,7 +9,7 @@ from label.serializers import LabelSerializer
 from rest_framework.response import Response
 from rest_framework.generics import GenericAPIView
 from note.models import LabelMap
-from services.repository import get_all_label, delete_label_and_relation
+from services.repository import get_all_label, delete_label_and_relation, get_single_label
 
 class CreateLabel(GenericAPIView):
     serializer_class = LabelSerializer
@@ -45,12 +45,8 @@ class EditLabel(GenericAPIView):
 
     def get_object(self, id=None):
         try:
-            user_id = self.request.user.id
-            query = '''SELECT * 
-                        FROM label_label
-                        WHERE (id=%s) and (user_id=%s)''' % (id, user_id) 
-            label = Label.objects.raw(query)
-            return label[0]
+           label = get_single_label(id, self.request.user.id)
+           return label
         except IndexError:
            raise RequestObjectDoesNotExixts(code=409, msg=response_code[409])
 
@@ -84,13 +80,9 @@ class DeleteLabel(GenericAPIView):
     @method_decorator(login_required)
     def delete(self, request, id=None):
         try:
-            user_id = request.user.id
-            try:
-                delete_label = delete_label_and_relation(id, user_id)
-                if delete_label:
-                    return Response({"code":200, "msg":response_code[200]})
-                return Response({"code":416, "msg":response_code[416]})
-            except ObjectDoesNotExist:
-                return Response({"code":308, "msg":response_code[308]})
-        except Exception:
+            delete_label = delete_label_and_relation(id, request.user.id)
+            if delete_label:
+                return Response({"code":200, "msg":response_code[200]})
             return Response({"code":416, "msg":response_code[416]})
+        except ObjectDoesNotExist:
+            return Response({"code":308, "msg":response_code[308]})
