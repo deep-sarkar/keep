@@ -1,7 +1,12 @@
-from note.models import LabelMap, Note
+from note.models import LabelMap, Note, UserMap
 from label.models import Label
+from django.contrib.auth.models import User
 from django.core.exceptions import ObjectDoesNotExist
-from note.exceptions import LabelMappingException, NotesNotFoundError, labelsNotFoundError
+from note.exceptions import ( LabelMappingException, 
+                              NotesNotFoundError, 
+                              labelsNotFoundError, 
+                              CollaboratorMappingException,
+                              )
 from util.status import response_code
 
 def add_label_id_from_label(labels, instance, user):
@@ -14,6 +19,19 @@ def add_label_id_from_label(labels, instance, user):
             LabelMap.objects.create(label=single_label, note = instance)
         except Exception:
             raise LabelMappingException(code=417, msg=response_code[417])
+
+def add_collaborator_id_from_collaborator(collaborators, instance, user):
+    invalid_user = []
+    for collaborator in collaborators:
+        try:
+            single_user = User.objects.get(username = collaborator)
+        except ObjectDoesNotExist:
+            invalid_user.append(collaborator)
+        try:
+            UserMap.objects.get_or_create(user = single_user, note = instance)
+        except Exception as e:
+            raise CollaboratorMappingException(code=418, msg=response_code[418])
+    return invalid_user
 
 def edit_label_id_from_label(labels, instance, user):
     for label in labels:
