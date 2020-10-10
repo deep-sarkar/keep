@@ -1,11 +1,11 @@
 from .token_service import generate_token
-from django.core.mail import send_mail
 from django.contrib.sites.shortcuts import get_current_site
 from fundoo.settings import EMAIL_HOST_USER
 from django_short_url.views import get_surl
 from django_short_url.models import ShortURL
 from util import static_data
 from django.template.loader import render_to_string
+from account.task import send_fundoo_mail
 
 def send_account_activation_mail(request):
     username             = request.data.get('username')
@@ -28,8 +28,7 @@ def send_account_activation_mail(request):
                 'domain': domain,
                 'surl': final_url[2],
             })
-    send_mail(subject, msg, EMAIL_HOST_USER,
-                    [email], fail_silently=False)
+    send_fundoo_mail.delay(subject, msg, [email])
 
 def send_forgot_password_mail(request, username):
     email = request.data.get('email')
@@ -49,5 +48,4 @@ def send_forgot_password_mail(request, username):
             'domain': domain_name,
             'surl': final_url[2],
             })         
-    send_mail(mail_subject, msg, EMAIL_HOST_USER,
-                [email], fail_silently=False)
+    send_fundoo_mail.delay(mail_subject, msg, [email])
