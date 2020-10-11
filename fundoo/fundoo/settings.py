@@ -42,7 +42,8 @@ INSTALLED_APPS = [
     'account',
     'django_short_url',
     'note',
-    'label'
+    'label',
+    'django_celery_beat',
 ]
 
 MIDDLEWARE = [
@@ -115,7 +116,7 @@ AUTH_PASSWORD_VALIDATORS = [
 
 LANGUAGE_CODE = 'en-us'
 
-TIME_ZONE = 'Asia/Kolkata'
+TIME_ZONE = 'UTC'
 
 USE_I18N = True
 
