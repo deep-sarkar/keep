@@ -5,3 +5,4 @@ label/migrations
 note/migrations
 .vscode
 media
+celerybeat-schedule
