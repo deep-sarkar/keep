@@ -32,8 +32,8 @@ from services.repository import ( add_label_id_from_label,
                                   get_all_trash_note,
                                   get_all_archive_note,
                                   get_single_note,
-                                  add_collaborator_id_from_collaborator
-
+                                  add_collaborator_id_from_collaborator,
+                                  delete_note_and_relation
                                 )
 
 class CreateNote(GenericAPIView):
@@ -54,6 +54,7 @@ class CreateNote(GenericAPIView):
             serializer = NoteSerializer(data = request.data)
             if serializer.is_valid():
                 instance = serializer.save(user = request.user)
+                collab = None
                 if labels != None:
                     try:
                         add_label_id_from_label(labels, instance, request.user)
@@ -121,6 +122,7 @@ class EditNote(GenericAPIView):
                 collaborators = request.data.get('collaborators')
             except KeyError:
                 pass
+            collab = None
             serializer = EditNoteSerializer(note, data=request.data, partial=True)
             if serializer.is_valid():
                 instance = serializer.save(user = request.user)
@@ -161,5 +163,18 @@ class ArchiveNote(GenericAPIView):
             return Response({"data":serializer.data, "code":200, "msg":response_code[200]})
         except NotesNotFoundError as e :
             return Response({'code':e.code, 'msg':e.msg})
+
+class DeleteNote(GenericAPIView):
+    serializer_class = EditNoteSerializer
+
+    @method_decorator(login_required)
+    def delete(self, request, id=None):
+        try:
+            delete_note = delete_note_and_relation(id, request.user.id)
+            if delete_note:
+                return Response({"code":200, "msg":response_code[200]})
+            return Response({"code":409, "msg":response_code[409]})
+        except Exception:
+            return Response({"code":416, "msg":response_code[416]})
 
 
