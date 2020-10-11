@@ -36,11 +36,17 @@ from services.repository import ( add_label_id_from_label,
                                   delete_note_and_relation
                                 )
 
+from services.reminder_service import check_reminder_for_upcoming_time
+from note.task import send_reminder_mail
+
+
 class CreateNote(GenericAPIView):
     serializer_class = NoteSerializer
     
     def post(self, request, *args, **kwargs):
         try:
+            rem_msg = None
+            collab = None
             if not request.user.is_authenticated:
                 return Response({"code":413, "msg":response_code[413]})
             try:
@@ -51,10 +57,17 @@ class CreateNote(GenericAPIView):
                 collaborators = request.data.get('collaborators')
             except KeyError:
                 pass
+            try:
+                rem = request.data.get('reminder')
+                upcoming_time = check_reminder_for_upcoming_time(rem)
+                if not upcoming_time:
+                    request.data['reminder'] = None
+                    rem_msg = response_code[415]
+            except KeyError:
+                pass
             serializer = NoteSerializer(data = request.data)
             if serializer.is_valid():
                 instance = serializer.save(user = request.user)
-                collab = None
                 if labels != None:
                     try:
                         add_label_id_from_label(labels, instance, request.user)
@@ -65,9 +78,17 @@ class CreateNote(GenericAPIView):
                         collab = add_collaborator_id_from_collaborator(collaborators, instance, request.user)
                     except CollaboratorMappingException as e:
                         return Response({"code":e.code, "msg":e.msg})
-                return Response({"code":201, "msg":response_code[201],"invalid_user":collab})
+                resp = {"code":201, 
+                        "msg":response_code[201],
+                        "invalid_user":collab,
+                        "rem_msg":rem_msg}
+                if upcoming_time:
+                    email = request.user.email
+                    send_reminder_mail.delay(rem, email)
+                return Response(resp)
             return Response({"code":300, "msg":response_code[300]})
-        except Exception:
+        except Exception as e:
+            print(e)
             return Response({"code":416, "msg":response_code[416]})
 
 
@@ -109,6 +130,9 @@ class EditNote(GenericAPIView):
 
     @method_decorator(login_required)
     def put(self, request, id=None):
+        rem_msg = None
+        collab = None
+        upcoming_time = False
         try:
             try:
                 note       = self.get_object(id)
@@ -122,7 +146,14 @@ class EditNote(GenericAPIView):
                 collaborators = request.data.get('collaborators')
             except KeyError:
                 pass
-            collab = None
+            try:
+                rem = request.data.get('reminder')
+                upcoming_time = check_reminder_for_upcoming_time(rem)
+                if not upcoming_time:
+                    request.data['reminder'] = None
+                    rem_msg = response_code[415]
+            except KeyError:
+                pass
             serializer = EditNoteSerializer(note, data=request.data, partial=True)
             if serializer.is_valid():
                 instance = serializer.save(user = request.user)
@@ -135,7 +166,17 @@ class EditNote(GenericAPIView):
                         collab = add_collaborator_id_from_collaborator(collaborators, instance, request.user)
                     except CollaboratorMappingException as e:
                         return Response({"code":e.code, "msg":e.msg})
-                return Response({"data":serializer.data,"code":200, "msg":response_code[200],"invalid_user":collab})
+                if upcoming_time:
+                    email = request.user.email
+                    send_reminder_mail.delay(rem, email)
+                resp = {
+                        "data":serializer.data,
+                        "code":200, 
+                        "msg":response_code[200],
+                        "invalid_user":collab, 
+                        "rem_msg":rem_msg
+                        }
+                return Response(resp)
             return Response({"code":300, "msg":response_code[300]})
         except Exception as e:
             return Response({"code":416, "msg":response_code[416]})
