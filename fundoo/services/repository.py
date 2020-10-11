@@ -171,3 +171,18 @@ def delete_label_and_relation(id, user_id):
     except Exception:
         pass
     return False
+
+def delete_note_and_relation(id, user_id):
+    try:
+        note = Note.objects.get(id = id, trash = True, user_id = user_id)
+        mapped_notes     = LabelMap.objects.filter(note_id = id)
+        mapped_user_note = UserMap.objects.filter(note_id = id) 
+        print(mapped_notes)
+        if mapped_notes != None:
+            mapped_notes.delete()
+            mapped_user_note.delete()
+            note.delete()
+            return True
+    except Exception:
+        return False
+    return False
