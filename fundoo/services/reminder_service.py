@@ -6,6 +6,8 @@ import pytz
 ITZ = pytz.timezone('Asia/Kolkata')
 
 def check_reminder_for_upcoming_time(reminder):
+    if reminder == None:
+        raise KeyError
     split_date = reminder[0:10]
     split_time = reminder[-5:]
     date = datetime.now(ITZ).date()
