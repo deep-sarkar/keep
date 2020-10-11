@@ -47,6 +47,7 @@ class CreateNote(GenericAPIView):
         try:
             rem_msg = None
             collab = None
+            upcoming_time = False
             if not request.user.is_authenticated:
                 return Response({"code":413, "msg":response_code[413]})
             try:
