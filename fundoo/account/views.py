@@ -17,7 +17,7 @@ from .serializers import (RegistrationSerializer,
                           ForgotPasswordSerializer)
 
 #token
-from account.services.token_service import generate_token
+from account.services.token_service import generate_token, generate_login_token
 
 #errors
 from django.core.exceptions import ValidationError, ObjectDoesNotExist
@@ -37,7 +37,7 @@ from account.services.email_services import send_account_activation_mail, send_f
 from account.services.repository import (create_user,
                                           set_new_password)
 
-from rest_framework_jwt.settings import api_settings
+
 import jwt
 
 #User model
@@ -49,9 +49,6 @@ from . import redis
 #Static data
 from util import static_data
 from util.status import response_code
-
-jwt_encode_handler = api_settings.JWT_ENCODE_HANDLER
-jwt_payload_handler = api_settings.JWT_PAYLOAD_HANDLER
 
 
 class Registration(GenericAPIView):
@@ -90,8 +87,7 @@ class LoginAPIView(GenericAPIView):
         if user_obj is not None:
             if user_obj.is_active:
                 login(request,user_obj)
-                payload = jwt_payload_handler(user_obj)
-                token = jwt_encode_handler(payload)
+                token = generate_login_token(user_obj)
                 redis.set_attribute(username,token)
                 return Response({'code':200,'msg':response_code[200],'token':token})
             return Response({'code':411,'msg':response_code[411]})
@@ -103,8 +99,6 @@ class Logout(GenericAPIView):
     def get(self, request, *args, **kwargs):
         if not request.user.is_authenticated:
             return Response({'code':413, 'msg':response_code[413]})
-        username = request.user.username
-        redis.delete_attribute(username)     #delete token from redis
         logout(request)
         return Response({'code':200,'msg':response_code[200]})
 
