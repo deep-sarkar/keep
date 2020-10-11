@@ -5,6 +5,7 @@ from note.views import (
                         EditNote, 
                         TrashNote, 
                         ArchiveNote,
+                        DeleteNote
                         )
 
 urlpatterns = [
@@ -13,5 +14,5 @@ urlpatterns = [
     path('edit/<int:id>/', EditNote.as_view()),
     path('trash/', TrashNote.as_view()),
     path('archive/', ArchiveNote.as_view()),
-    
+    path('delete/<int:id>/', DeleteNote.as_view())
 ]
