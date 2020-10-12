@@ -16,7 +16,7 @@ from util import static_data
 
 # Decorator
 from django.utils.decorators import method_decorator
-from django.contrib.auth.decorators import login_required
+from util.decorator import custom_login_required
 from django.views.decorators.cache import cache_page
 
 # Exceptions
@@ -53,6 +53,7 @@ from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 class CreateNote(GenericAPIView):
     serializer_class = NoteSerializer
     
+    @method_decorator(custom_login_required)
     def post(self, request, *args, **kwargs):
         try:
             rem_msg = None
@@ -106,7 +107,7 @@ class CreateNote(GenericAPIView):
 class GetNote(GenericAPIView):
     serializer_class = GetNoteSerializer
 
-    @method_decorator(login_required)
+    @method_decorator(custom_login_required)
     @method_decorator(cache_page(60*10))
     def get(self, request, *args, **kwargs):
         try:
@@ -137,7 +138,7 @@ class EditNote(GenericAPIView):
         except NotesNotFoundError:
            raise RequestObjectDoesNotExixts(code=409, msg=response_code[409])
 
-    @method_decorator(login_required)
+    @method_decorator(custom_login_required)
     def get(self, request, id=None):
         try:
             try:
@@ -149,7 +150,7 @@ class EditNote(GenericAPIView):
         except Exception:
             return Response({"code":416, "msg":response_code[416]})
 
-    @method_decorator(login_required)
+    @method_decorator(custom_login_required)
     def put(self, request, id=None):
         rem_msg = None
         collab = None
@@ -205,7 +206,7 @@ class EditNote(GenericAPIView):
 class TrashNote(GenericAPIView):
     serializer_class = EditNoteSerializer
 
-    @method_decorator(login_required)
+    @method_decorator(custom_login_required)
     def get(self, request, *args, **kwargs):
         try:
             notes = get_all_trash_note(request.user.id)
@@ -217,7 +218,7 @@ class TrashNote(GenericAPIView):
 class ArchiveNote(GenericAPIView):
     serializer_class = EditNoteSerializer
 
-    @method_decorator(login_required)
+    @method_decorator(custom_login_required)
     def get(self, request, *args, **kwargs):
         try:
             notes = get_all_archive_note(request.user.id)
@@ -229,7 +230,7 @@ class ArchiveNote(GenericAPIView):
 class DeleteNote(GenericAPIView):
     serializer_class = EditNoteSerializer
 
-    @method_decorator(login_required)
+    @method_decorator(custom_login_required)
     def delete(self, request, id=None):
         try:
             delete_note = delete_note_and_relation(id, request.user.id)
