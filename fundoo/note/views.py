@@ -114,7 +114,7 @@ class EditNote(GenericAPIView):
         try:
             note = get_single_note(id, self.request.user.id)
             return note
-        except IndexError:
+        except NotesNotFoundError:
            raise RequestObjectDoesNotExixts(code=409, msg=response_code[409])
 
     @method_decorator(login_required)
