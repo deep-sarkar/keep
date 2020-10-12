@@ -8,6 +8,7 @@ from note.exceptions import ( LabelMappingException,
                               CollaboratorMappingException,
                               )
 from util.status import response_code
+from django.db.models import Q
 
 def add_label_id_from_label(labels, instance, user):
     '''
@@ -84,14 +85,16 @@ def get_all_note(user_id):
     error : NoteNotFoundError
     '''
     try:
-        query = '''SELECT * 
-                    FROM note_note 
-                    WHERE (trash = false) and (archive = false) and (user_id=%s) 
-                    ORDER BY pin desc, id desc''' % user_id
-        notes = Note.objects.raw(query)
+        notes = Note.objects.filter(Q(trash=False) and Q(arhive=False) and Q(user_id=user_id))
+        try:
+            collabs_note = Note.objects.filter(Q(trash=False) and Q(arhive=False) and Q(collaborators__in=[user_id]))
+        except Exception as e:
+            pass
+        if collabs_note.exists():
+            notes = notes.union(collabs_note)
         return notes
     except Exception:
-        raise NotesNotFoundError(409, response_code[409])
+        raise NotesNotFoundError(code=409, msg=response_code[409])
 
 def get_all_trash_note(user_id):
     '''
