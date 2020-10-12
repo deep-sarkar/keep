@@ -91,12 +91,13 @@ def get_all_note(user_id):
     try:
         notes = Note.objects.filter(Q(trash=False) and Q(arhive=False) and Q(user_id=user_id))
         try:
-            collabs_note = Note.objects.filter(Q(trash=False) and Q(arhive=False) and Q(collaborators__in=[user_id]))
+            collabs_note = Note.objects.filter(Q(trash=False) and Q(arhive=False) 
+                                            and Q(collaborators__in=[user_id]))
         except Exception as e:
             pass
         if collabs_note.exists():
             notes = notes.union(collabs_note)
-        return notes
+        return notes.order_by('-id')
     except Exception:
         raise NotesNotFoundError(code=409, msg=response_code[409])
 
