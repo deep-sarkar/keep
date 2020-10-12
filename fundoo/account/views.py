@@ -17,7 +17,7 @@ from .serializers import (RegistrationSerializer,
                           ForgotPasswordSerializer)
 
 #token
-from account.services.token_service import generate_token, generate_login_token
+from account.services.token_service import generate_token, generate_login_token, refresh_token
 
 #errors
 from django.core.exceptions import ValidationError, ObjectDoesNotExist
@@ -183,4 +183,13 @@ class ResetNewPassword(GenericAPIView):
             return Response({'code':200,'msg':response_code[200]})
         return Response({'code':416,'msg':response_code[416]})
 
- 
+
+class RefreshToken(GenericAPIView):
+
+    def post(self, request):
+        token = request.data.get('token')
+        print(token)
+        if token != None:
+            token = refresh_token(token)
+            return Response(token)
+        return Response({'code':416,'msg':response_code[416]})
