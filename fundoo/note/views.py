@@ -12,10 +12,12 @@ from note.serializers import NoteSerializer, EditNoteSerializer, GetNoteSerializ
 
 # Response
 from util.status import response_code
+from util import static_data
 
 # Decorator
 from django.utils.decorators import method_decorator
 from django.contrib.auth.decorators import login_required
+from django.views.decorators.cache import cache_page
 
 # Exceptions
 from note.exceptions import (RequestObjectDoesNotExixts, 
@@ -36,11 +38,16 @@ from services.repository import ( add_label_id_from_label,
                                   delete_note_and_relation
                                 )
 
+# Service
 from services.reminder_service import check_reminder_for_upcoming_time
+
+# Async task
 from note.task import send_reminder_mail
 
+# Paginator
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
-from util import static_data
+
+
 
 
 class CreateNote(GenericAPIView):
@@ -100,6 +107,7 @@ class GetNote(GenericAPIView):
     serializer_class = GetNoteSerializer
 
     @method_decorator(login_required)
+    @method_decorator(cache_page(60*10))
     def get(self, request, *args, **kwargs):
         try:
             notes = get_all_note(request.user.id)
