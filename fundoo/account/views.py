@@ -49,6 +49,7 @@ from . import redis
 #Static data
 from util import static_data
 from util.status import response_code
+from util.decorator import custom_login_required
 
 
 class Registration(GenericAPIView):
@@ -80,7 +81,7 @@ class LoginAPIView(GenericAPIView):
             return Response({'code':410,'msg':response_code[410]})
         username = request.data.get('username')
         password = request.data.get('password')
-        valid = validate_login(request)                                             #validate request data
+        valid = validate_login(username, password)                                             #validate request data
         if valid != None:
             return Response(valid)                         #If error occour will return error msg and code
         user_obj = authenticate(request, username=username, password=password)
