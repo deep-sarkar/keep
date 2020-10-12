@@ -72,11 +72,15 @@ def get_single_note(id, user_id):
             user_id => requested user id
     output: single note
     '''
-    query = '''SELECT * 
-                FROM note_note 
-                WHERE (id=%s) and (user_id=%s)''' % (id, user_id) 
-    note = Note.objects.raw(query)
-    return note[0]
+    try:
+        try:
+            note = Note.objects.get(id=id, user_id=user_id)
+        except ObjectDoesNotExist:
+            note = Note.objects.get(id=id, collaborators__in=[user_id])
+        return note
+    except Exception:
+        raise NotesNotFoundError(code=409, msg=response_code[409])
+
 
 def get_all_note(user_id):
     '''
