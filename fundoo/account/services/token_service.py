@@ -38,6 +38,5 @@ def refresh_token(token):
     
     payload["exp"] = datetime.datetime.utcnow() + datetime.timedelta(days=1)
     new_token = jwt.encode(payload, key).decode('utf-8')
-    print(new_token)
     redis.set_attribute(username,new_token)
     return {"token":new_token, "code":200, "msg":response_code[200]}
