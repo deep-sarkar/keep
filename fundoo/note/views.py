@@ -39,6 +39,9 @@ from services.repository import ( add_label_id_from_label,
 from services.reminder_service import check_reminder_for_upcoming_time
 from note.task import send_reminder_mail
 
+from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
+from util import static_data
+
 
 class CreateNote(GenericAPIView):
     serializer_class = NoteSerializer
@@ -100,6 +103,15 @@ class GetNote(GenericAPIView):
     def get(self, request, *args, **kwargs):
         try:
             notes = get_all_note(request.user.id)
+            
+            paginator = Paginator(notes, static_data.ITEMS_PER_PAGE)
+            page_number = request.GET.get('page', 1)
+            try:
+                notes = paginator.page(page_number)
+            except PageNotAnInteger:
+                notes = paginator.page(1)
+            except EmptyPage:
+                notes = paginator.page(paginator.num_pages)
             serializer = GetNoteSerializer(notes, many=True)
             return Response({"data":serializer.data, "code":200, "msg":response_code[200]})
         except NotesNotFoundError as e:
