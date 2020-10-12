@@ -5,9 +5,9 @@ from .views import(Registration,
                     ChangePasswordView, 
                     ActivateAccount, 
                     ForgotPasswordView,
-                    ResetNewPassword
+                    ResetNewPassword,
+                    RefreshToken
                     ) 
-from rest_framework_jwt.views import refresh_jwt_token
 
 
 urlpatterns = [
@@ -18,5 +18,5 @@ urlpatterns = [
     path('activate/<surl>/', ActivateAccount.as_view(), name='activate'),
     path('forgot_password/',ForgotPasswordView.as_view(), name='forgot_password'),
     path('reset_password/<str:surl>/', ResetNewPassword.as_view(), name='reset_new_password'),
-    path('token_refresh/', refresh_jwt_token)
+    path('refresh_token/', RefreshToken.as_view())
 ]
