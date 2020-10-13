@@ -49,7 +49,10 @@ from . import redis
 #Static data
 from util import static_data
 from util.status import response_code
+
+# Decorator
 from util.decorator import custom_login_required
+from django.utils.decorators import method_decorator
 
 
 class Registration(GenericAPIView):
@@ -106,6 +109,7 @@ class Logout(GenericAPIView):
 class ChangePasswordView(GenericAPIView):
     serializer_class = ResetPasswordSerializer
 
+    @method_decorator(custom_login_required)
     def post(self, request, *args, **kwargs):
         if not request.user.is_authenticated:
             return Response({'code':413, 'msg':response_code[413]})
