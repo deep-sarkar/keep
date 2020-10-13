@@ -1,4 +1,5 @@
-from django.shortcuts import redirect
+from rest_framework.response import Response
+from util.status import response_code
 
 def custom_login_required(function):
     def wrap(request, *args, **kwargs):
@@ -7,5 +8,5 @@ def custom_login_required(function):
             # the decorator is passed and you can handle the request from the view
             return function(request, *args, **kwargs)
         else:
-            return redirect('login')
+            return Response({"code":413,"msg":response_code[413]})
     return wrap
