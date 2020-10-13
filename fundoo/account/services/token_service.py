@@ -24,7 +24,6 @@ def generate_login_token(payload):
         payload["exp"] = datetime.datetime.utcnow() + datetime.timedelta(days=3)
         token = jwt.encode(payload, key).decode('utf-8')
         token_key = username +'_token_key'
-        print(token_key)
         redis.set_attribute(token_key,token)
     return token
 
