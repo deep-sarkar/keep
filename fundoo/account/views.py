@@ -120,6 +120,8 @@ class ChangePasswordView(GenericAPIView):
         password         = request.data.get('password')
         password_set = set_new_password(username, password)
         if password_set:
+            token_key = username +'_token_key'
+            redis.delete_attribute(token_key)
             return Response({'code':200,'msg':response_code[200]})
         return Response({'code':416,'msg':response_code[416]})
         
