@@ -15,10 +15,15 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path, include
+from rest_framework_swagger.views import get_swagger_view
+
+schema_view = get_swagger_view(title="fundoo API Documentation")
+
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('account/', include('account.urls')),
     path('note/', include('note.urls')),
-    path('label/', include('label.urls'))
+    path('label/', include('label.urls')),
+    path('',schema_view)
 ]
