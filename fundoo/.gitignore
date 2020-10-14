@@ -6,3 +6,4 @@ note/migrations
 .vscode
 media
 celerybeat-schedule
+logs
