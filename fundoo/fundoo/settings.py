@@ -44,6 +44,7 @@ INSTALLED_APPS = [
     'note',
     'label',
     'django_celery_beat',
+    'rest_framework_swagger',
 ]
 
 MIDDLEWARE = [
@@ -70,6 +71,9 @@ TEMPLATES = [
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
             ],
+            'libraries': { 
+            'staticfiles' : 'django.templatetags.static',
+        },
         },
     },
 ]
@@ -144,6 +148,9 @@ LOGIN_URL = '/account/login/'
 
 
 REST_FRAMEWORK = {
+    'DEFAULT_SCHEMA_CLASS': (
+        'rest_framework.schemas.coreapi.AutoSchema'
+    ),
     'DEFAULT_PERMISSION_CLASSES': (
         # 'rest_framework.permissions.IsAuthenticated',
     ),
@@ -151,7 +158,7 @@ REST_FRAMEWORK = {
         'rest_framework.authentication.BasicAuthentication',
         'account.backend.JWTAuthentication',
         # 'rest_framework_jwt.authentication.JSONWebTokenAuthentication',
-        # 'rest_framework.authentication.SessionAuthentication',
+        'rest_framework.authentication.SessionAuthentication',
     ),
 }
 
