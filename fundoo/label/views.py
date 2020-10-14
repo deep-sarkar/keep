@@ -68,13 +68,13 @@ class EditLabel(GenericAPIView):
         param request, id: Http request contains user detail, id contains label id
         returns: single label or does not exist
         '''
+        
         try:
-            try:
-                label = self.get_object(id)
-            except RequestObjectDoesNotExixts as e:
-                return Response({'code':e.code, 'msg':e.msg})
+            label = self.get_object(id)
             serializer = LabelSerializer(label)
             return Response({"data":serializer.data,"code":200, "msg":response_code[200]})
+        except RequestObjectDoesNotExixts as e:
+            return Response({'code':e.code, 'msg':e.msg})
         except Exception:
             return Response({"code":416, "msg":response_code[416]})
 
