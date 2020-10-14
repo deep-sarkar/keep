@@ -16,6 +16,10 @@ class CreateLabel(GenericAPIView):
 
     @method_decorator(login_required)
     def post(self, request, *args, **kwargs):
+        '''
+        param request: Http request contains user detail, new label data
+        returns: 201 created or validation error
+        '''
         name = request.data.get('name')
         user = request.user
         try:
@@ -32,6 +36,10 @@ class GetLabel(GenericAPIView):
 
     @method_decorator(login_required)
     def get(self, request, *args, **kwargs):
+        '''
+        param request: Http request contains user detail
+        returns: all labels or Labels not found
+        '''
         try:
             labels = get_all_label(request.user.id)
             serializer = LabelSerializer(labels, many = True)
@@ -44,6 +52,10 @@ class EditLabel(GenericAPIView):
     serializer_class = LabelSerializer
 
     def get_object(self, id=None):
+        '''
+        param id: Label id
+        returns: single label or raise error
+        '''
         try:
            label = get_single_label(id, self.request.user.id)
            return label
@@ -52,6 +64,10 @@ class EditLabel(GenericAPIView):
 
     @method_decorator(login_required)
     def get(self, request, id=None):
+        '''
+        param request, id: Http request contains user detail, id contains label id
+        returns: single label or does not exist
+        '''
         try:
             try:
                 label = self.get_object(id)
@@ -64,6 +80,10 @@ class EditLabel(GenericAPIView):
 
     @method_decorator(login_required)
     def put(self, request, id=None):
+        '''
+        param request, id: Http request new update field data, id contains label id
+        returns: update label or does not exists
+        '''
         try:
             label = self.get_object(id)
         except RequestObjectDoesNotExixts as e:
@@ -79,6 +99,10 @@ class DeleteLabel(GenericAPIView):
 
     @method_decorator(login_required)
     def delete(self, request, id=None):
+        '''
+        param request, id: Http request contains user detail, id contains label id
+        returns: delete perticular label and relation with notes or return does not exists
+        '''
         try:
             delete_label = delete_label_and_relation(id, request.user.id)
             if delete_label:

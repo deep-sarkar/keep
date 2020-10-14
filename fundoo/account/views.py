@@ -54,12 +54,18 @@ from util.status import response_code
 from util.decorator import custom_login_required
 from django.utils.decorators import method_decorator
 
+# Cache
+from django.core.cache import cache
 
 class Registration(GenericAPIView):
     serializer_class = RegistrationSerializer
     
 
     def post(self, request, *args, **kwargs):
+        '''
+        param request: Http request contains user data
+        returns: 201 created or error
+        '''
         if request.user.is_authenticated:
             return Response({'code':410,'msg':response_code[410]})
         valid = validate_registration(request)                  #validate request data return msg if error occour
@@ -80,6 +86,10 @@ class LoginAPIView(GenericAPIView):
     serializer_class = LoginSerializer
         
     def post(self, request, *args, **kwargs):
+        '''
+        param request: Http request contains login detail
+        returns : 200 success and token or error
+        '''
         if request.user.is_authenticated:
             return Response({'code':410,'msg':response_code[410]})
         username = request.data.get('username')
@@ -100,9 +110,15 @@ class LoginAPIView(GenericAPIView):
 class Logout(GenericAPIView):
     serializer_class = LoginSerializer
 
+    @method_decorator(custom_login_required)
     def get(self, request, *args, **kwargs):
+        '''
+        param request: Http request contains user detail
+        returns: 200 successful
+        '''
         if not request.user.is_authenticated:
             return Response({'code':413, 'msg':response_code[413]})
+        cache.clear()
         logout(request)
         return Response({'code':200,'msg':response_code[200]})
 
@@ -111,6 +127,10 @@ class ChangePasswordView(GenericAPIView):
 
     @method_decorator(custom_login_required)
     def post(self, request, *args, **kwargs):
+        '''
+        param request: Http request contains password data and confirm data
+        returns: 200 successful or error
+        '''
         if not request.user.is_authenticated:
             return Response({'code':413, 'msg':response_code[413]})
         valid = validate_change_password(request)  #validate request data
@@ -129,6 +149,10 @@ class ActivateAccount(GenericAPIView):
     serializer_class = LoginSerializer
 
     def get(self, request, surl):
+        '''
+        param request: Http request , surl
+        returns : 200 successful or error
+        '''
         try:
             token_obj = ShortURL.objects.get(surl=surl)
         except Exception:
@@ -155,6 +179,10 @@ class ForgotPasswordView(GenericAPIView):
     serializer_class = ForgotPasswordSerializer
 
     def post(self, request, *args, **kwargs):
+        '''
+        param request : Http request cotains email
+        return : Send reset mail or error
+        '''
         email = request.data.get('email')
         try:
             validate_email(email)

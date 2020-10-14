@@ -55,6 +55,10 @@ class CreateNote(GenericAPIView):
     
     @method_decorator(custom_login_required)
     def post(self, request, *args, **kwargs):
+        '''
+        param request : Http request contains new note data and user detail
+        returns : 201 created status if successful else raise validation error 
+        '''
         try:
             rem_msg = None
             collab = None
@@ -62,15 +66,15 @@ class CreateNote(GenericAPIView):
             if not request.user.is_authenticated:
                 return Response({"code":413, "msg":response_code[413]})
             try:
-                labels = request.data.get('labels')
+                labels = request.data.get('labels') #Fetch labels from request
             except KeyError:
                 pass
             try:
-                collaborators = request.data.get('collaborators')
+                collaborators = request.data.get('collaborators') #Fetch collaborators from request
             except KeyError:
                 pass
             try:
-                rem = request.data.get('reminder')
+                rem = request.data.get('reminder') #Fetch reminder from request
                 upcoming_time = check_reminder_for_upcoming_time(rem)
                 if not upcoming_time:
                     request.data['reminder'] = None
@@ -100,7 +104,6 @@ class CreateNote(GenericAPIView):
                 return Response(resp)
             return Response({"code":300, "msg":response_code[300]})
         except Exception as e:
-            print(e)
             return Response({"code":416, "msg":response_code[416]})
 
 
@@ -110,6 +113,10 @@ class GetNote(GenericAPIView):
     @method_decorator(custom_login_required)
     @method_decorator(cache_page(60*10))
     def get(self, request, *args, **kwargs):
+        '''
+        param request: Http request contains user detail
+        returns: all notes for perticular user or raise error
+        '''
         try:
             notes = get_all_note(request.user.id)
             
@@ -132,6 +139,10 @@ class EditNote(GenericAPIView):
     serializer_class = EditNoteSerializer
 
     def get_object(self,id):
+        '''
+        param id: Note id
+        returns: single note for perticular user if user is authenticated or user in collaborators else raise RequestObjectDoesNotExixts
+        '''
         try:
             note = get_single_note(id, self.request.user.id)
             return note
@@ -140,6 +151,10 @@ class EditNote(GenericAPIView):
 
     @method_decorator(custom_login_required)
     def get(self, request, id=None):
+        '''
+        param request, id: Http request contains user detail, id contains note id
+        returns: single note or does not exist
+        '''
         try:
             try:
                 note       = self.get_object(id)
@@ -152,6 +167,10 @@ class EditNote(GenericAPIView):
 
     @method_decorator(custom_login_required)
     def put(self, request, id=None):
+        '''
+        param request, id: Http request new update field data, id contains note id
+        returns: update note or does not exists
+        '''
         rem_msg = None
         collab = None
         upcoming_time = False
@@ -208,6 +227,10 @@ class TrashNote(GenericAPIView):
 
     @method_decorator(custom_login_required)
     def get(self, request, *args, **kwargs):
+        '''
+        param request: Http request contains user detail
+        returns: all trash notes for perticular user or raise error
+        '''
         try:
             notes = get_all_trash_note(request.user.id)
             serializer = EditNoteSerializer(notes, many=True)
@@ -220,6 +243,10 @@ class ArchiveNote(GenericAPIView):
 
     @method_decorator(custom_login_required)
     def get(self, request, *args, **kwargs):
+        '''
+        param request: Http request contains user detail
+        returns: all archive notes for perticular user or raise error
+        '''
         try:
             notes = get_all_archive_note(request.user.id)
             serializer = EditNoteSerializer(notes, many=True)
@@ -232,6 +259,10 @@ class DeleteNote(GenericAPIView):
 
     @method_decorator(custom_login_required)
     def delete(self, request, id=None):
+        '''
+        param request, id: Http request contains user detail, id contains note id
+        returns: delete perticular note or return does not exists
+        '''
         try:
             delete_note = delete_note_and_relation(id, request.user.id)
             if delete_note:
