@@ -225,10 +225,11 @@ class ResetNewPassword(GenericAPIView):
 
 
 class RefreshToken(GenericAPIView):
+    serializer_class = ForgotPasswordSerializer
+
 
     def post(self, request):
         token = request.data.get('token')
-        print(token)
         if token != None:
             token = refresh_token(token)
             return Response(token)
