@@ -175,3 +175,27 @@ CACHES = {
 CELERY_BROKER_URL = 'redis://localhost:6379/4'
 CELERY_TASK_SERIALIZER = 'json'
 CELERY_ACCEPT_CONTENT = ['json']
+
+LOGGING ={
+    'version': 1,
+    'loggers':{
+        'django':{
+            'handlers':['file'],
+            'level':"DEBUG",
+        }
+    },
+    'handlers':{
+        'file':{
+            'level': 'INFO',
+            'class': 'logging.FileHandler',
+            'filename': 'fundoo/logs/debug.log',
+            'formatter':'simple',
+        }
+    },
+    'formatters':{
+            'simple': {
+            'format': '{levelname} {asctime} {message}',
+            'style': '{',
+        }
+    }
+}
