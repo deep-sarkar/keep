@@ -90,22 +90,25 @@ class LoginAPIView(GenericAPIView):
         param request: Http request contains login detail
         returns : 200 success and token or error
         '''
-        if request.user.is_authenticated:
-            return Response({'code':410,'msg':response_code[410]})
-        username = request.data.get('username')
-        password = request.data.get('password')
-        valid = validate_login(username, password)                                             #validate request data
-        if valid != None:
-            return Response(valid)                         #If error occour will return error msg and code
-        user_obj = authenticate(request, username=username, password=password)
-        if user_obj is not None:
-            if user_obj.is_active:
-                login(request,user_obj)
-                payload = {"username":username}
-                token = generate_login_token(payload)
-                return Response({'code':200,'msg':response_code[200],'token':token})
-            return Response({'code':411,'msg':response_code[411]})
-        return Response({'code':412,'msg':response_code[412]})
+        try:
+            if request.user.is_authenticated:
+                return Response({'code':410,'msg':response_code[410]})
+            username = request.data.get('username')
+            password = request.data.get('password')
+            valid = validate_login(username, password)                                             #validate request data
+            if valid != None:
+                return Response(valid)                         #If error occour will return error msg and code
+            user_obj = authenticate(request, username=username, password=password)
+            if user_obj is not None:
+                if user_obj.is_active:
+                    login(request,user_obj)
+                    payload = {"username":username}
+                    token = generate_login_token(payload)
+                    return Response({'code':200,'msg':response_code[200],'token':token})
+                return Response({'code':411,'msg':response_code[411]})
+            return Response({"code":416, "msg":response_code[416]})
+        except Exception:
+            return Response({"code":416, "msg":response_code[416]})
 
 class Logout(GenericAPIView):
     serializer_class = LoginSerializer
@@ -116,11 +119,14 @@ class Logout(GenericAPIView):
         param request: Http request contains user detail
         returns: 200 successful
         '''
-        if not request.user.is_authenticated:
-            return Response({'code':413, 'msg':response_code[413]})
-        cache.clear()
-        logout(request)
-        return Response({'code':200,'msg':response_code[200]})
+        try:
+            if not request.user.is_authenticated:
+                return Response({'code':413, 'msg':response_code[413]})
+            cache.clear()
+            logout(request)
+            return Response({'code':200,'msg':response_code[200]})
+        except Exception:
+            return Response({"code":416, "msg":response_code[416]})
 
 class ChangePasswordView(GenericAPIView):
     serializer_class = ResetPasswordSerializer
@@ -131,19 +137,22 @@ class ChangePasswordView(GenericAPIView):
         param request: Http request contains password data and confirm data
         returns: 200 successful or error
         '''
-        if not request.user.is_authenticated:
-            return Response({'code':413, 'msg':response_code[413]})
-        valid = validate_change_password(request)  #validate request data
-        if valid != None:
-            return Response(valid)   #If error occour will return error msg and code
-        username         = request.user.username
-        password         = request.data.get('password')
-        password_set = set_new_password(username, password)
-        if password_set:
-            token_key = username +'_token_key'
-            redis.delete_attribute(token_key)
-            return Response({'code':200,'msg':response_code[200]})
-        return Response({'code':416,'msg':response_code[416]})
+        try:
+            if not request.user.is_authenticated:
+                return Response({'code':413, 'msg':response_code[413]})
+            valid = validate_change_password(request)  #validate request data
+            if valid != None:
+                return Response(valid)   #If error occour will return error msg and code
+            username         = request.user.username
+            password         = request.data.get('password')
+            password_set = set_new_password(username, password)
+            if password_set:
+                token_key = username +'_token_key'
+                redis.delete_attribute(token_key)
+                return Response({'code':200,'msg':response_code[200]})
+            return Response({'code':416,'msg':response_code[416]})
+        except Exception:
+            return Response({"code":416, "msg":response_code[416]})
         
 class ActivateAccount(GenericAPIView):
     serializer_class = LoginSerializer
@@ -155,18 +164,16 @@ class ActivateAccount(GenericAPIView):
         '''
         try:
             token_obj = ShortURL.objects.get(surl=surl)
-        except Exception:
-            return Response({'code':409,'msg':response_code[409]})
-        token     = token_obj.lurl
-        try:
+            token     = token_obj.lurl
             decode    = jwt.decode(token, 'secret')
+            username  = decode['username']
+            validate_user_does_not_exists(username)
         except jwt.DecodeError:
             return Response({'code':304,'msg':response_code[304]})
-        username  = decode['username']
-        try:
-            validate_user_does_not_exists(username)
         except UsernameDoesNotExistsError as e:
             return Response({'code':e.code, 'msg':e.msg})
+        except Exception:
+            return Response({'code':409,'msg':response_code[409]})
         user = User.objects.get(username=username)
         if user.is_active:
             return Response({'code':302, 'msg':response_code[302]})
@@ -186,16 +193,14 @@ class ForgotPasswordView(GenericAPIView):
         email = request.data.get('email')
         try:
             validate_email(email)
-        except ValidationError:
-            return Response({'code':404,'msg':response_code[404]})
-        user = User.objects.filter(email=email)
-        try:
+            user = User.objects.filter(email=email)
             username = user.values()[0]['username'] 
-        except IndexError:
-            return Response({'code':303,'msg':response_code[303]})
-        try:            
             send_forgot_password_mail(request, username)
             return Response({'code':200,'msg':response_code[200]})
+        except ValidationError:
+            return Response({'code':404,'msg':response_code[404]})
+        except IndexError:
+            return Response({'code':303,'msg':response_code[303]})          
         except SMTPException:
             return Response({'code':301,'msg':response_code[301]})
 
@@ -203,8 +208,8 @@ class ResetNewPassword(GenericAPIView):
     serializer_class = ResetPasswordSerializer
 
     def post(self, request, *args, **kwargs):
-        surl= kwargs.get('surl')
         try:
+            surl= kwargs.get('surl')
             token_obj = ShortURL.objects.get(surl=surl)
         except Exception:
             return Response({'code':409,'msg':response_code[409]})

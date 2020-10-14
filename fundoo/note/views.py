@@ -119,19 +119,18 @@ class GetNote(GenericAPIView):
         '''
         try:
             notes = get_all_note(request.user.id)
-            
             paginator = Paginator(notes, static_data.ITEMS_PER_PAGE)
             page_number = request.GET.get('page', 1)
-            try:
-                notes = paginator.page(page_number)
-            except PageNotAnInteger:
-                notes = paginator.page(1)
-            except EmptyPage:
-                notes = paginator.page(paginator.num_pages)
-            serializer = GetNoteSerializer(notes, many=True)
-            return Response({"data":serializer.data, "code":200, "msg":response_code[200]})
+            notes = paginator.page(page_number)
         except NotesNotFoundError as e:
             return Response({"code":e.code, "msg":e.msg})
+        except PageNotAnInteger:
+            notes = paginator.page(1)
+        except EmptyPage:
+            notes = paginator.page(paginator.num_pages)
+        serializer = GetNoteSerializer(notes, many=True)
+        return Response({"data":serializer.data, "code":200, "msg":response_code[200]})
+        
 
 
 
@@ -156,12 +155,11 @@ class EditNote(GenericAPIView):
         returns: single note or does not exist
         '''
         try:
-            try:
-                note       = self.get_object(id)
-            except RequestObjectDoesNotExixts as e:
-                return Response({'code':e.code, 'msg':e.msg})
+            note       = self.get_object(id)
             serializer = EditNoteSerializer(note)
             return Response({"data":serializer.data,"code":200, "msg":response_code[200]})
+        except RequestObjectDoesNotExixts as e:
+            return Response({'code':e.code, 'msg':e.msg})
         except Exception:
             return Response({"code":416, "msg":response_code[416]})
 
@@ -175,26 +173,26 @@ class EditNote(GenericAPIView):
         collab = None
         upcoming_time = False
         try:
-            try:
-                note       = self.get_object(id)
-            except RequestObjectDoesNotExixts as e:
-                return Response({'code':e.code, 'msg':e.msg})
-            try:
-                labels = request.data.get('labels')
-            except KeyError:
-                pass
-            try:
-                collaborators = request.data.get('collaborators')
-            except KeyError:
-                pass
-            try:
-                rem = request.data.get('reminder')
-                upcoming_time = check_reminder_for_upcoming_time(rem)
-                if not upcoming_time:
-                    request.data['reminder'] = None
-                    rem_msg = response_code[415]
-            except KeyError:
-                pass
+            note       = self.get_object(id)
+        except RequestObjectDoesNotExixts as e:
+            return Response({'code':e.code, 'msg':e.msg})
+        try:
+            labels = request.data.get('labels')
+        except KeyError:
+            pass
+        try:
+            collaborators = request.data.get('collaborators')
+        except KeyError:
+            pass
+        try:
+            rem = request.data.get('reminder')
+            upcoming_time = check_reminder_for_upcoming_time(rem)
+            if not upcoming_time:
+                request.data['reminder'] = None
+                rem_msg = response_code[415]
+        except KeyError:
+            pass
+        try:
             serializer = EditNoteSerializer(note, data=request.data, partial=True)
             if serializer.is_valid():
                 instance = serializer.save(user = request.user)
@@ -203,10 +201,8 @@ class EditNote(GenericAPIView):
                     edit_label_id_from_label(labels, instance, request.user)
                 if collaborators != None:
                     delete_existing_user_relation = UserMap.objects.filter(note = instance).delete()
-                    try:
-                        collab = add_collaborator_id_from_collaborator(collaborators, instance, request.user)
-                    except CollaboratorMappingException as e:
-                        return Response({"code":e.code, "msg":e.msg})
+                    collab = add_collaborator_id_from_collaborator(collaborators, instance, request.user)
+                    
                 if upcoming_time:
                     email = request.user.email
                     send_reminder_mail.delay(rem, email)
@@ -219,6 +215,8 @@ class EditNote(GenericAPIView):
                         }
                 return Response(resp)
             return Response({"code":300, "msg":response_code[300]})
+        except CollaboratorMappingException as e:
+            return Response({"code":e.code, "msg":e.msg})
         except Exception as e:
             return Response({"code":416, "msg":response_code[416]})
 
