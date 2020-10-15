@@ -10,6 +10,7 @@ from rest_framework.response import Response
 from rest_framework.generics import GenericAPIView
 from note.models import LabelMap
 from services.repository import get_all_label, delete_label_and_relation, get_single_label
+import logging
 
 class CreateLabel(GenericAPIView):
     serializer_class = LabelSerializer
@@ -75,7 +76,8 @@ class EditLabel(GenericAPIView):
             return Response({"data":serializer.data,"code":200, "msg":response_code[200]})
         except RequestObjectDoesNotExixts as e:
             return Response({'code':e.code, 'msg':e.msg})
-        except Exception:
+        except Exception as e:
+            logging.warning(e)
             return Response({"code":416, "msg":response_code[416]})
 
     @method_decorator(login_required)

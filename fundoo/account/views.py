@@ -57,6 +57,9 @@ from django.utils.decorators import method_decorator
 # Cache
 from django.core.cache import cache
 
+import logging
+
+
 class Registration(GenericAPIView):
     serializer_class = RegistrationSerializer
     
@@ -75,8 +78,9 @@ class Registration(GenericAPIView):
             create_user(request)                                            #will create user
             send_account_activation_mail(request)                           #Sending account activation mail
         except UserCreationError as e:
+            logging.warning(e)
             return Response({'code':e.code,'msg':e.msg})
-        except SMTPException:
+        except SMTPException as e:
             return Response({'code':301,'msg':response_code[301]})
         return Response({"code":201, "msg":response_code[201]})
 
@@ -107,7 +111,8 @@ class LoginAPIView(GenericAPIView):
                     return Response({'code':200,'msg':response_code[200],'token':token})
                 return Response({'code':411,'msg':response_code[411]})
             return Response({"code":416, "msg":response_code[416]})
-        except Exception:
+        except Exception as e:
+            logging.warning(e)
             return Response({"code":416, "msg":response_code[416]})
 
 class Logout(GenericAPIView):
@@ -125,7 +130,8 @@ class Logout(GenericAPIView):
             cache.clear()
             logout(request)
             return Response({'code':200,'msg':response_code[200]})
-        except Exception:
+        except Exception as e:
+            logging.warning(e)
             return Response({"code":416, "msg":response_code[416]})
 
 class ChangePasswordView(GenericAPIView):
@@ -151,7 +157,8 @@ class ChangePasswordView(GenericAPIView):
                 redis.delete_attribute(token_key)
                 return Response({'code':200,'msg':response_code[200]})
             return Response({'code':416,'msg':response_code[416]})
-        except Exception:
+        except Exception as e:
+            logging.warning(e)
             return Response({"code":416, "msg":response_code[416]})
         
 class ActivateAccount(GenericAPIView):
@@ -172,7 +179,8 @@ class ActivateAccount(GenericAPIView):
             return Response({'code':304,'msg':response_code[304]})
         except UsernameDoesNotExistsError as e:
             return Response({'code':e.code, 'msg':e.msg})
-        except Exception:
+        except Exception as e:
+            logging.warning(e)
             return Response({'code':409,'msg':response_code[409]})
         user = User.objects.get(username=username)
         if user.is_active:
@@ -211,7 +219,8 @@ class ResetNewPassword(GenericAPIView):
         try:
             surl= kwargs.get('surl')
             token_obj = ShortURL.objects.get(surl=surl)
-        except Exception:
+        except Exception as e:
+            logging.warning(e)
             return Response({'code':409,'msg':response_code[409]})
         token = token_obj.lurl   #get token from token object
         username = validate_reset_password(token,request)

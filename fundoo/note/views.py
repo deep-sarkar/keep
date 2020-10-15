@@ -46,7 +46,7 @@ from note.task import send_reminder_mail
 
 # Paginator
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
-
+import logging
 
 
 
@@ -104,6 +104,7 @@ class CreateNote(GenericAPIView):
                 return Response(resp)
             return Response({"code":300, "msg":response_code[300]})
         except Exception as e:
+            logging.warning(e)
             return Response({"code":416, "msg":response_code[416]})
 
 
@@ -160,7 +161,8 @@ class EditNote(GenericAPIView):
             return Response({"data":serializer.data,"code":200, "msg":response_code[200]})
         except RequestObjectDoesNotExixts as e:
             return Response({'code':e.code, 'msg':e.msg})
-        except Exception:
+        except Exception as e:
+            logging.warning(e)
             return Response({"code":416, "msg":response_code[416]})
 
     @method_decorator(custom_login_required)
@@ -218,6 +220,7 @@ class EditNote(GenericAPIView):
         except CollaboratorMappingException as e:
             return Response({"code":e.code, "msg":e.msg})
         except Exception as e:
+            logging.warning(e)
             return Response({"code":416, "msg":response_code[416]})
 
 class TrashNote(GenericAPIView):
@@ -266,7 +269,8 @@ class DeleteNote(GenericAPIView):
             if delete_note:
                 return Response({"code":200, "msg":response_code[200]})
             return Response({"code":409, "msg":response_code[409]})
-        except Exception:
+        except Exception as e:
+            logging.warning(e)
             return Response({"code":416, "msg":response_code[416]})
 
 
