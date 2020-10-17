@@ -13,19 +13,15 @@ def generate_token(payload):
 
 def generate_login_token(payload):
     key = "secret"
-    username = payload['username']
     try:
-        token_key = username +'_token_key'
-        token = redis.get_attribute(token_key)
-        jwt.decode(token,'secret')
-    except Exception as e:
-        pass
-    if token == None:
+        username = payload['username']
         payload["exp"] = datetime.datetime.utcnow() + datetime.timedelta(days=3)
         token = jwt.encode(payload, key).decode('utf-8')
         token_key = username +'_token_key'
         redis.set_attribute(token_key,token)
-    return token
+        return token
+    except Exception:
+        return {"code":416, "msg":response_code[416]}
 
 def refresh_token(token):
     key = "secret"
@@ -37,8 +33,7 @@ def refresh_token(token):
         return {"code":304,"msg":response_code(304)}
     username = decode.get('username')
     payload = {"username":username}
-    
-    payload["exp"] = datetime.datetime.utcnow() + datetime.timedelta(days=1)
+    payload["exp"] = datetime.datetime.utcnow() + datetime.timedelta(days=3)
     new_token = jwt.encode(payload, key).decode('utf-8')
     token_key = username +'_token_key'
     redis.set_attribute(token_key,new_token)
