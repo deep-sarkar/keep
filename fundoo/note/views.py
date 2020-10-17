@@ -175,26 +175,23 @@ class EditNote(GenericAPIView):
         collab = None
         upcoming_time = False
         try:
-            note       = self.get_object(id)
-        except RequestObjectDoesNotExixts as e:
-            return Response({'code':e.code, 'msg':e.msg})
-        try:
-            labels = request.data.get('labels')
-        except KeyError:
-            pass
-        try:
-            collaborators = request.data.get('collaborators')
-        except KeyError:
-            pass
-        try:
-            rem = request.data.get('reminder')
-            upcoming_time = check_reminder_for_upcoming_time(rem)
-            if not upcoming_time:
-                request.data['reminder'] = None
-                rem_msg = response_code[415]
-        except KeyError:
-            pass
-        try:
+            note = self.get_object(id)
+            try:
+                labels = request.data.get('labels')
+            except KeyError:
+                pass
+            try:
+                collaborators = request.data.get('collaborators')
+            except KeyError:
+                pass
+            try:
+                rem = request.data.get('reminder')
+                upcoming_time = check_reminder_for_upcoming_time(rem)
+                if not upcoming_time:
+                    request.data['reminder'] = None
+                    rem_msg = response_code[415]
+            except KeyError:
+                pass
             serializer = EditNoteSerializer(note, data=request.data, partial=True)
             if serializer.is_valid():
                 instance = serializer.save(user = request.user)
@@ -219,6 +216,8 @@ class EditNote(GenericAPIView):
             return Response({"code":300, "msg":response_code[300]})
         except CollaboratorMappingException as e:
             return Response({"code":e.code, "msg":e.msg})
+        except RequestObjectDoesNotExixts as e:
+            return Response({'code':e.code, 'msg':e.msg})
         except Exception as e:
             logging.warning(e)
             return Response({"code":416, "msg":response_code[416]})
