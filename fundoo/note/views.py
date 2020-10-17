@@ -112,7 +112,6 @@ class GetNote(GenericAPIView):
     serializer_class = GetNoteSerializer
 
     @method_decorator(custom_login_required)
-    @method_decorator(cache_page(60*10))
     def get(self, request, *args, **kwargs):
         '''
         param request: Http request contains user detail
