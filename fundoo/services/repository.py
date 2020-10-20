@@ -24,25 +24,60 @@ def tuple_to_list(user_tuple):
     return collaborators
 
 def get_collaborators(id):
-    cursor = connection.cursor()
-    cursor.execute("""SELECT username 
-                        FROM auth_user
-                        INNER JOIN note_usermap
-                        ON auth_user.id = note_usermap.user_id
-                        INNER JOIN note_note
-                        ON note_note.id = note_usermap.note_id
-                        WHERE note_note.id = %s""",[id])
-    data = cursor.fetchall()
-    collab = tuple_to_list(data)
-    return collab
+    try:
+        cursor = connection.cursor()
+        cursor.execute("""SELECT username 
+                            FROM auth_user
+                            INNER JOIN note_usermap
+                            ON auth_user.id = note_usermap.user_id
+                            INNER JOIN note_note
+                            ON note_note.id = note_usermap.note_id
+                            WHERE note_note.id = %s""",[id])
+        data = cursor.fetchall()
+        collab = tuple_to_list(data)
+        return collab
+    except Exception:
+        return []
+    finally:
+        cursor.close()
+
+def get_labels(id):
+    try:
+        cursor = connection.cursor()
+        cursor.execute("""SELECT name
+                            FROM label_label
+                            INNER JOIN note_labelmap
+                            ON label_label.id = note_labelmap.label_id
+                            INNER JOIN note_note
+                            ON note_note.id = note_labelmap.note_id
+                            WHERE note_note.id = %s""",[id])
+        data = cursor.fetchall()
+        labels = tuple_to_list(data)
+        return labels
+    except Exception:
+        return []
+    finally:
+        cursor.close()
 
 def get_single_note(id, user_id):
-    cursor = connection.cursor()
-    cursor.execute("Select * from note_note where id = %s and user_id = %s",[id,user_id])
-    data = fetchalldict(cursor)
-    data[0]['labels'] = []
-    data[0]['collaborators'] = get_collaborators(id)
-    return data[0]
+    try:
+        cursor = connection.cursor()
+        cursor.execute("Select * from note_note where id = %s and user_id = %s",[id,user_id])
+        data = fetchalldict(cursor)
+        data[0]['labels'] = get_labels(id)
+        data[0]['collaborators'] = get_collaborators(id)
+        return data[0]
+    except Exception as e:
+        raise NotesNotFoundError(code=409, msg=response_code[409])
+    finally:
+        cursor.close()
+
+
+
+
+
+
+
 
 def add_label_id_from_label(labels, instance, user):
     '''
@@ -180,6 +215,7 @@ def get_all_label(user_id):
                         WHERE user_id = %s
                         ORDER BY id desc''' % user_id
         labels = Label.objects.raw(query)
+        print(labels)
         return labels
     except Exception:
         raise LabelsNotFoundError(code=308, msg=response_code[308])
@@ -194,6 +230,8 @@ def get_single_label(id, user_id):
                 FROM label_label
                 WHERE (id=%s) and (user_id=%s)''' % (id, user_id) 
     label = Label.objects.raw(query)
+    print("label",label)
+    print("label 0",label[0])
     return label[0]
 
 def delete_label_and_relation(id, user_id):
