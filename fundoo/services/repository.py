@@ -9,6 +9,40 @@ from note.exceptions import ( LabelMappingException,
                               )
 from util.status import response_code
 from django.db.models import Q
+from django.db import connection
+
+
+def fetchalldict(cursor):
+    columns = [col[0] for col in cursor.description]
+    return [
+        dict(zip(columns, row))
+        for row in cursor.fetchall()
+    ]
+
+def tuple_to_list(user_tuple):
+    collaborators = [user[0] for user in user_tuple]
+    return collaborators
+
+def get_collaborators(id):
+    cursor = connection.cursor()
+    cursor.execute("""SELECT username 
+                        FROM auth_user
+                        INNER JOIN note_usermap
+                        ON auth_user.id = note_usermap.user_id
+                        INNER JOIN note_note
+                        ON note_note.id = note_usermap.note_id
+                        WHERE note_note.id = %s""",[id])
+    data = cursor.fetchall()
+    collab = tuple_to_list(data)
+    return collab
+
+def get_single_note(id, user_id):
+    cursor = connection.cursor()
+    cursor.execute("Select * from note_note where id = %s and user_id = %s",[id,user_id])
+    data = fetchalldict(cursor)
+    data[0]['labels'] = []
+    data[0]['collaborators'] = get_collaborators(id)
+    return data[0]
 
 def add_label_id_from_label(labels, instance, user):
     '''
@@ -66,20 +100,20 @@ def add_collaborator_id_from_collaborator(collaborators, instance, user):
             raise CollaboratorMappingException(code=418, msg=response_code[418])
     return invalid_user
 
-def get_single_note(id, user_id):
-    '''
-    input : id      => requested note id
-            user_id => requested user id
-    output: single note
-    '''
-    try:
-        try:
-            note = Note.objects.get(id=id, user_id=user_id)
-        except ObjectDoesNotExist:
-            note = Note.objects.get(id=id, collaborators__in=[user_id])
-        return note
-    except Exception:
-        raise NotesNotFoundError(code=409, msg=response_code[409])
+# def get_single_note(id, user_id):
+#     '''
+#     input : id      => requested note id
+#             user_id => requested user id
+#     output: single note
+#     '''
+#     try:
+#         try:
+#             note = Note.objects.get(id=id, user_id=user_id)
+#         except ObjectDoesNotExist:
+#             note = Note.objects.get(id=id, collaborators__in=[user_id])
+#         return note
+#     except Exception:
+#         raise NotesNotFoundError(code=409, msg=response_code[409])
 
 
 def get_all_note(user_id):
