@@ -164,13 +164,13 @@ class ChangePasswordView(GenericAPIView):
 class ActivateAccount(GenericAPIView):
     serializer_class = LoginSerializer
 
-    def get(self, request, surl):
+    def get(self, request, stoken):
         '''
         param request: Http request , surl
         returns : 200 successful or error
         '''
         try:
-            token_obj = ShortURL.objects.get(surl=surl)
+            token_obj = ShortURL.objects.get(surl=stoken)
             token     = token_obj.lurl
             decode    = jwt.decode(token, 'secret')
             username  = decode['username']
@@ -217,8 +217,8 @@ class ResetNewPassword(GenericAPIView):
 
     def post(self, request, *args, **kwargs):
         try:
-            surl= kwargs.get('surl')
-            token_obj = ShortURL.objects.get(surl=surl)
+            stoken= kwargs.get('stoken')
+            token_obj = ShortURL.objects.get(surl=stoken)
         except Exception as e:
             logging.warning(e)
             return Response({'code':409,'msg':response_code[409]})

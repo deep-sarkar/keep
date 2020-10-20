@@ -26,7 +26,7 @@ def send_account_activation_mail(request):
             {
                 'username': username, 
                 'domain': domain,
-                'surl': final_url[2],
+                'stoken': final_url[2],
             })
     send_fundoo_mail.delay(subject, msg, [email])
 
@@ -46,6 +46,6 @@ def send_forgot_password_mail(request, username):
         {
             'username': username, 
             'domain': domain_name,
-            'surl': final_url[2],
+            'stoken': final_url[2],
             })         
     send_fundoo_mail.delay(mail_subject, msg, [email])
