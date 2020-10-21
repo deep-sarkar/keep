@@ -89,7 +89,6 @@ def update_data(id, new_data):
             update_note(id, key, value)
         return True
     except Exception as e:
-        print("exc",e)
         return False
 
 def get_label_id(label_name, user_id):
@@ -108,10 +107,17 @@ def create_label_and_get_id(label_name, user_id):
             data = cursor.fetchall()
             data = data[0][0]
     except Exception as e:
-        print(e)
         return None
 
-    
+def delete_old_label_relation(note_id):
+    try:
+        with connection.cursor() as cursor:
+            cursor.execute('''DELETE FROM note_labelmap
+                                WHERE note_id = %s''',[note_id])
+            data = cursor.fetchall()
+            return True
+    except Exception:
+        return False
 
 
 
