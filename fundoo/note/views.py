@@ -35,7 +35,10 @@ from services.repository import ( add_label_id_from_label,
                                   get_all_archive_note,
                                   get_single_note,
                                   add_collaborator_id_from_collaborator,
-                                  delete_note_and_relation
+                                  delete_note_and_relation,
+                                  update_data,
+                                  map_label,
+                                  map_collaborator
                                 )
 
 # Service
@@ -46,7 +49,8 @@ from note.task import send_reminder_mail
 
 # Paginator
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
-import logging
+# import logging
+import asyncio
 
 
 
@@ -104,7 +108,7 @@ class CreateNote(GenericAPIView):
                 return Response(resp)
             return Response({"code":300, "msg":response_code[300]})
         except Exception as e:
-            logging.warning(e)
+            # logging.warning(e)
             return Response({"code":416, "msg":response_code[416]})
 
 
@@ -156,12 +160,12 @@ class EditNote(GenericAPIView):
         '''
         try:
             note       = self.get_object(id)
-            serializer = EditNoteSerializer(note)
-            return Response({"data":serializer.data,"code":200, "msg":response_code[200]})
+            return Response({"data":note,"code":200, "msg":response_code[200]})
         except RequestObjectDoesNotExixts as e:
             return Response({'code':e.code, 'msg':e.msg})
         except Exception as e:
-            logging.warning(e)
+            # print(e)
+            # logging.warning(e)
             return Response({"code":416, "msg":response_code[416]})
 
     @method_decorator(custom_login_required)
@@ -191,35 +195,27 @@ class EditNote(GenericAPIView):
                     rem_msg = response_code[415]
             except KeyError:
                 pass
-            serializer = EditNoteSerializer(note, data=request.data, partial=True)
-            if serializer.is_valid():
-                instance = serializer.save(user = request.user)
+            done = update_data(id,request.data)
+            if done:
                 if labels != None:
-                    delete_existing_relation = LabelMap.objects.filter(note = instance).delete()
-                    edit_label_id_from_label(labels, instance, request.user)
+                    map_label(id, request.user.id, labels)
                 if collaborators != None:
-                    delete_existing_user_relation = UserMap.objects.filter(note = instance).delete()
-                    collab = add_collaborator_id_from_collaborator(collaborators, instance, request.user)
-                    
+                    collab = map_collaborator(id, collaborators)
                 if upcoming_time:
                     email = request.user.email
                     send_reminder_mail.delay(rem, email)
-                resp = {
-                        "data":serializer.data,
-                        "code":200, 
-                        "msg":response_code[200],
-                        "invalid_user":collab, 
-                        "rem_msg":rem_msg
-                        }
-                return Response(resp)
-            return Response({"code":300, "msg":response_code[300]})
-        except CollaboratorMappingException as e:
-            return Response({"code":e.code, "msg":e.msg})
-        except RequestObjectDoesNotExixts as e:
-            return Response({'code':e.code, 'msg':e.msg})
+            resp = {"data":self.get_object(id),
+                    "code":200, 
+                    "msg":response_code[200],
+                    "invalid_user":collab, 
+                    "rem_msg":rem_msg
+                    }
+            return Response(resp)
         except Exception as e:
-            logging.warning(e)
+            print(e)
+            # logging.warning(e)
             return Response({"code":416, "msg":response_code[416]})
+
 
 class TrashNote(GenericAPIView):
     serializer_class = EditNoteSerializer
@@ -268,7 +264,7 @@ class DeleteNote(GenericAPIView):
                 return Response({"code":200, "msg":response_code[200]})
             return Response({"code":409, "msg":response_code[409]})
         except Exception as e:
-            logging.warning(e)
+            # logging.warning(e)
             return Response({"code":416, "msg":response_code[416]})
 
 
