@@ -80,7 +80,6 @@ def update_note(id, attribute, value):
                                 WHERE id = %s''',[value, id])
             data = cursor.fetchall()
     except Exception as e:
-        print(e)
         pass
 
 def update_data(id, new_data):
@@ -98,10 +97,19 @@ def get_label_id(label_name, user_id):
         with connection.cursor() as cursor:
             cursor.callproc('get_label',[label_name,user_id])
             data = cursor.fetchall()
-            data = tuple_to_list(data)
-            return data[0]
+            return data[0][0]
     except Exception:
-        pass
+        return None
+
+def create_label_and_get_id(label_name, user_id):
+    try:
+        with connection.cursor() as cursor:
+            cursor.callproc('sp_insert_label',[label_name, user_id])
+            data = cursor.fetchall()
+            data = data[0][0]
+    except Exception as e:
+        print(e)
+        return None
 
     
 
