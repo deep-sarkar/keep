@@ -12,19 +12,38 @@ from django.db.models import Q
 from django.db import connection
 import asyncio
 
-# Convert tuples into dictionary
+
+
+'''
+                                                                CONVERTER
+'''
+
+
 def fetchalldict(cursor):
+    '''
+    param: cursor object
+    return: dictionary of query
+    '''
     columns = [col[0] for col in cursor.description]
     return [
         dict(zip(columns, row))
         for row in cursor.fetchall()
     ]
 
-def tuple_to_list(user_tuple):
-    collaborators = [user[0] for user in user_tuple]
+def tuple_to_list(tuple_of_tuple):
+    '''
+    param: tuple of tuple containing string value
+    return: list of string value
+    '''
+    collaborators = [user[0] for user in tuple_of_tuple]
     return collaborators
 
+
 def get_collaborators(note_id):
+    '''
+    param: note_id
+    return: list of username
+    '''
     try:
         cursor = connection.cursor()
         cursor.execute("""SELECT username 
@@ -43,8 +62,12 @@ def get_collaborators(note_id):
         cursor.close()
 
 
-# Get labels for perticular note
+
 def get_labels(note_id):
+    '''
+    param: note_id
+    return: list of lable (string value)
+    '''
     try:
         cursor = connection.cursor()
         cursor.execute("""SELECT name
@@ -71,8 +94,8 @@ def get_single_note(note_id, user_id):
         cursor = connection.cursor()
         cursor.execute("Select * from note_note where id = %s and user_id = %s",[note_id,user_id])
         data = fetchalldict(cursor)
-        data[0]['labels'] = get_labels(note_id)
-        data[0]['collaborators'] = get_collaborators(note_id)
+        data[0]['labels'] = get_labels(note_id)   #get all labels for perticular note
+        data[0]['collaborators'] = get_collaborators(note_id) #get all collaborators for single note
         return data[0]
     except Exception as e:
         raise NotesNotFoundError(code=409, msg=response_code[409])
@@ -82,18 +105,27 @@ def get_single_note(note_id, user_id):
 
 # Update new data in existing note by field and field value
 async def update_note(note_id, attribute, value):
+    '''
+    param: note_id, attributr (column name), value (row value)
+    return: True if updated
+    '''
     try:
         with connection.cursor() as cursor:
             cursor.execute(f'''UPDATE note_note
                                 SET {attribute} = %s
                                 WHERE id = %s''',[value, note_id])
             data = cursor.fetchall()
+            return True
     except Exception as e:
-        pass
+        return False
 
 
 # Pass table column name and column data into update note function
 async def update_data(note_id, new_data):
+    '''
+    param: note_id, new_data (new data to update note)
+    return: True after update or false if exception occoured
+    '''
     try:
         for key in new_data:
             value = new_data[key]
@@ -120,9 +152,13 @@ def get_label_id(label_name, user_id):
             data = cursor.fetchall()
             return data[0][0]
     except Exception:
-        return None
+        return -1
 
 def create_label_and_get_id(label_name, user_id):
+    '''
+    param: label_name, user_id
+    return: label id after creating label
+    '''
     try:
         with connection.cursor() as cursor:
             cursor.callproc('sp_insert_label',[label_name, user_id])
@@ -133,6 +169,10 @@ def create_label_and_get_id(label_name, user_id):
         return None
 
 def delete_old_label_relation(note_id):
+    '''
+    param: note_id
+    return: True after deleting all old relation for label with note
+    '''
     try:
         with connection.cursor() as cursor:
             cursor.execute('''DELETE FROM note_labelmap
@@ -142,20 +182,33 @@ def delete_old_label_relation(note_id):
     except Exception:
         return False
 
-def map_label(note_id, user_id, labels):
+def create_label_relation(note_id, label_id):
+    '''
+    params: note_id, label_id
+    function: create a new relation for perticular label with note
+    '''
     try:
-        cursor = connection.cursor()
+        with connection.cursor() as cursor:
+            cursor.execute('''INSERT INTO note_labelmap(note_id, label_id)
+                                VALUES(%s, %s)''',[note_id, label_id])
+            cursor.fetchall()
+    except Exception as e:
+        pass
+
+def map_label(note_id, user_id, labels):
+    '''
+    param: note_id, user_id, labels (list of label)
+    function: map all labels for perticular note
+    '''
+    try:
         delete_old_label_relation(note_id)
         for label in labels:
             label_id = get_label_id(label, user_id)
             if label_id == -1:
                 label_id = create_label_and_get_id(label, user_id)
-            cursor.execute('''INSERT INTO note_labelmap(note_id, label_id)
-                                VALUES(%s, %s)''',[note_id, label_id])
+            create_label_relation(note_id, label_id)
     except Exception as e:
-        print(e)
-    finally:
-        cursor.close()
+        pass
 
 
 
@@ -164,6 +217,10 @@ def map_label(note_id, user_id, labels):
 # COLLABORATORS
 
 def get_user_id(username):
+    '''
+    params: username
+    return: user id if exists or -1
+    '''
     try:
         with connection.cursor() as cursor:
             cursor.callproc('sp_get_user',[username])
