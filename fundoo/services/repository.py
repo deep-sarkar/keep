@@ -231,6 +231,10 @@ def get_user_id(username):
         return -1
 
 def delete_old_collaborator_relations(note_id):
+    '''
+    params: note_id
+    function: delete all collaborator relation for perticular note
+    '''
     try:
         with connection.cursor() as cursor:
             cursor.execute("""DELETE FROM note_usermap
@@ -240,23 +244,31 @@ def delete_old_collaborator_relations(note_id):
     except Exception:
         return False
 
+def create_collaborator_reltion(note_id, user_id):
+    try:
+        with connection.cursor() as cursor:
+            cursor.execute('''INSERT INTO note_usermap(note_id, user_id)
+                                VALUES(%s, %s)''',[note_id, user_id])
+            cursor.fetchall()
+    except Exception:
+        pass
+
 def map_collaborator(note_id, collaborators):
+    '''
+    param: note_id, collaborators (list of user)
+    '''
     invalid_user = []
     try:
         delete_old_collaborator_relations(note_id)
-        cursor = connection.cursor()
         for username in collaborators:
             user_id = get_user_id(username)
             if user_id == -1:
                 invalid_user.append(username)
             else:
-                cursor.execute('''INSERT INTO note_usermap(note_id, user_id)
-                                VALUES(%s, %s)''',[note_id, user_id])
+                create_collaborator_reltion(note_id, user_id)
     except Exception:
         pass
-    finally:
-        cursor.close()
-        return invalid_user
+    
 
 
 
