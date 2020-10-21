@@ -158,8 +158,23 @@ def delete_old_collaborator_relations(note_id):
     except Exception:
         return False
 
-
-
+def map_collaborator(note_id, collaborators):
+    invalid_user = []
+    try:
+        delete_old_collaborator_relations(note_id)
+        cursor = connection.cursor()
+        for username in collaborators:
+            user_id = get_user_id(username)
+            if user_id == -1:
+                invalid_user.append(username)
+            else:
+                cursor.execute('''INSERT INTO note_usermap(note_id, user_id)
+                                VALUES(%s, %s)''',[note_id, user_id])
+    except Exception:
+        pass
+    finally:
+        cursor.close()
+        return invalid_user
 
 
 
