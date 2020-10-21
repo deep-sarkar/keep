@@ -106,6 +106,7 @@ def create_label_and_get_id(label_name, user_id):
             cursor.callproc('sp_insert_label',[label_name, user_id])
             data = cursor.fetchall()
             data = data[0][0]
+            return data
     except Exception as e:
         return None
 
@@ -119,8 +120,20 @@ def delete_old_label_relation(note_id):
     except Exception:
         return False
 
-
-
+def map_label(note_id, user_id, labels):
+    try:
+        cursor = connection.cursor()
+        delete_old_label_relation(note_id)
+        for label in labels:
+            label_id = get_label_id(label, user_id)
+            if label_id == -1:
+                label_id = create_label_and_get_id(label, user_id)
+            cursor.execute('''INSERT INTO note_labelmap(note_id, label_id)
+                                VALUES(%s, %s)''',[note_id, label_id])
+    except Exception as e:
+        print(e)
+    finally:
+        cursor.close()
 
 
 def add_label_id_from_label(labels, instance, user):
