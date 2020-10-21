@@ -12,6 +12,7 @@ from django.db.models import Q
 from django.db import connection
 import asyncio
 
+# Convert tuples into dictionary
 def fetchalldict(cursor):
     columns = [col[0] for col in cursor.description]
     return [
@@ -23,7 +24,7 @@ def tuple_to_list(user_tuple):
     collaborators = [user[0] for user in user_tuple]
     return collaborators
 
-def get_collaborators(id):
+def get_collaborators(note_id):
     try:
         cursor = connection.cursor()
         cursor.execute("""SELECT username 
@@ -32,7 +33,7 @@ def get_collaborators(id):
                             ON auth_user.id = note_usermap.user_id
                             INNER JOIN note_note
                             ON note_note.id = note_usermap.note_id
-                            WHERE note_note.id = %s""",[id])
+                            WHERE note_note.id = %s""",[note_id])
         data = cursor.fetchall()
         collab = tuple_to_list(data)
         return collab
@@ -41,7 +42,9 @@ def get_collaborators(id):
     finally:
         cursor.close()
 
-def get_labels(id):
+
+# Get labels for perticular note
+def get_labels(note_id):
     try:
         cursor = connection.cursor()
         cursor.execute("""SELECT name
@@ -50,7 +53,7 @@ def get_labels(id):
                             ON label_label.id = note_labelmap.label_id
                             INNER JOIN note_note
                             ON note_note.id = note_labelmap.note_id
-                            WHERE note_note.id = %s""",[id])
+                            WHERE note_note.id = %s""",[note_id])
         data = cursor.fetchall()
         labels = tuple_to_list(data)
         return labels
@@ -59,39 +62,58 @@ def get_labels(id):
     finally:
         cursor.close()
 
-def get_single_note(id, user_id):
+
+
+# GET SINGLE NOTE
+
+def get_single_note(note_id, user_id):
     try:
         cursor = connection.cursor()
-        cursor.execute("Select * from note_note where id = %s and user_id = %s",[id,user_id])
+        cursor.execute("Select * from note_note where id = %s and user_id = %s",[note_id,user_id])
         data = fetchalldict(cursor)
-        data[0]['labels'] = get_labels(id)
-        data[0]['collaborators'] = get_collaborators(id)
+        data[0]['labels'] = get_labels(note_id)
+        data[0]['collaborators'] = get_collaborators(note_id)
         return data[0]
     except Exception as e:
         raise NotesNotFoundError(code=409, msg=response_code[409])
     finally:
         cursor.close()
 
-def update_note(id, attribute, value):
+
+# Update new data in existing note by field and field value
+async def update_note(note_id, attribute, value):
     try:
         with connection.cursor() as cursor:
             cursor.execute(f'''UPDATE note_note
                                 SET {attribute} = %s
-                                WHERE id = %s''',[value, id])
+                                WHERE id = %s''',[value, note_id])
             data = cursor.fetchall()
     except Exception as e:
         pass
 
-def update_data(id, new_data):
+
+# Pass table column name and column data into update note function
+async def update_data(note_id, new_data):
     try:
         for key in new_data:
             value = new_data[key]
-            update_note(id, key, value)
+            await asyncio.gather(update_note(note_id, key, value))
         return True
     except Exception as e:
         return False
 
+
+
+
+
+
+# LABELS
+
 def get_label_id(label_name, user_id):
+    '''
+    params: label_name, user_id
+    return: label id if exists or -1
+    '''
     try:
         with connection.cursor() as cursor:
             cursor.callproc('get_label',[label_name,user_id])
@@ -137,6 +159,9 @@ def map_label(note_id, user_id, labels):
 
 
 
+
+
+# COLLABORATORS
 
 def get_user_id(username):
     try:

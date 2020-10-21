@@ -195,8 +195,8 @@ class EditNote(GenericAPIView):
                     rem_msg = response_code[415]
             except KeyError:
                 pass
-            done = update_data(id,request.data)
-            if done:
+            updated = asyncio.run(update_data(id,request.data))
+            if updated:
                 if labels != None:
                     map_label(id, request.user.id, labels)
                 if collaborators != None:
