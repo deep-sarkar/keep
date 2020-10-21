@@ -93,7 +93,15 @@ def update_data(id, new_data):
         print("exc",e)
         return False
 
-
+def get_label_id(label_name, user_id):
+    try:
+        with connection.cursor() as cursor:
+            cursor.callproc('get_label',[label_name,user_id])
+            data = cursor.fetchall()
+            data = tuple_to_list(data)
+            return data[0]
+    except Exception:
+        pass
 
     
 
