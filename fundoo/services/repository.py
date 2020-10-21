@@ -136,6 +136,33 @@ def map_label(note_id, user_id, labels):
         cursor.close()
 
 
+
+
+def get_user_id(username):
+    try:
+        with connection.cursor() as cursor:
+            cursor.callproc('sp_get_user',[username])
+            user_id = cursor.fetchall()
+            user_id = user_id[0][0]
+            return user_id
+    except Exception:
+        return -1
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 def add_label_id_from_label(labels, instance, user):
     '''
     input:  labels   => list of string,
