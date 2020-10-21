@@ -148,7 +148,15 @@ def get_user_id(username):
     except Exception:
         return -1
 
-
+def delete_old_collaborator_relations(note_id):
+    try:
+        with connection.cursor() as cursor:
+            cursor.execute("""DELETE FROM note_usermap
+                                WHERE note_id = %s""",[note_id])
+            cursor.fetchall()
+            return True
+    except Exception:
+        return False
 
 
 
