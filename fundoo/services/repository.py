@@ -10,7 +10,7 @@ from note.exceptions import ( LabelMappingException,
 from util.status import response_code
 from django.db.models import Q
 from django.db import connection
-
+import asyncio
 
 def fetchalldict(cursor):
     columns = [col[0] for col in cursor.description]
@@ -72,8 +72,30 @@ def get_single_note(id, user_id):
     finally:
         cursor.close()
 
+def update_note(id, attribute, value):
+    try:
+        with connection.cursor() as cursor:
+            cursor.execute(f'''UPDATE note_note
+                                SET {attribute} = %s
+                                WHERE id = %s''',[value, id])
+            data = cursor.fetchall()
+    except Exception as e:
+        print(e)
+        pass
+
+def update_data(id, new_data):
+    try:
+        for key in new_data:
+            value = new_data[key]
+            update_note(id, key, value)
+        return True
+    except Exception as e:
+        print("exc",e)
+        return False
 
 
+
+    
 
 
 
