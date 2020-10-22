@@ -324,7 +324,9 @@ def get_all_note(user_id):
         with connection.cursor() as cursor:
             cursor.callproc('sp_get_all_note',[user_id])
             data = fetchalldict(cursor)
-            return data
+        colab_notes = get_collaborated_notes(user_id)
+        data.append(colab_notes)
+        return data
     except Exception as e:
         return []
 
@@ -357,7 +359,18 @@ def get_archive_notes(user_id):
         return []
 
 
-
+def get_collaborated_notes(user_id):
+    '''
+    param: user_id
+    return: all collaborated note for perticular user
+    '''
+    try:
+        with connection.cursor() as cursor:
+            cursor.callproc('sp_get_collaborated_note', [user_id])
+            data = fetchalldict(cursor)
+            return data
+    except Exception:
+        return []
 
 
 
