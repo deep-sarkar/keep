@@ -104,7 +104,7 @@ def get_single_note(note_id, user_id):
 
 
 # Update new data in existing note by field and field value
-async def update_note(note_id, attribute, value):
+def update_note(note_id, attribute, value):
     '''
     param: note_id, attributr (column name), value (row value)
     return: True if updated
@@ -117,11 +117,12 @@ async def update_note(note_id, attribute, value):
             data = cursor.fetchall()
             return True
     except Exception as e:
+        print(e)
         return False
 
 
 # Pass table column name and column data into update note function
-async def update_data(note_id, new_data):
+def update_data(note_id, new_data):
     '''
     param: note_id, new_data (new data to update note)
     return: True after update or false if exception occoured
@@ -129,7 +130,7 @@ async def update_data(note_id, new_data):
     try:
         for key in new_data:
             value = new_data[key]
-            await asyncio.gather(update_note(note_id, key, value))
+            update_note(note_id, key, value)
         return True
     except Exception as e:
         return False
@@ -324,7 +325,14 @@ def get_all_note(user_id):
         return []
 
 
-
+def get_trashed_notes(user_id):
+    try:
+        with connection.cursor() as cursor:
+            cursor.callproc('sp_get_trash_note',[user_id])
+            data = fetchalldict(cursor)
+            return data
+    except Exception:
+        return []
 
 
 
