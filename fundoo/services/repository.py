@@ -313,6 +313,15 @@ def create_note(user_id, note_data):
         return -1
 
 
+# GET all note
+def get_all_note(user_id):
+    try:
+        with connection.cursor() as cursor:
+            cursor.callproc('sp_get_all_note',[user_id])
+            data = fetchalldict(cursor)
+            return data
+    except Exception as e:
+        return []
 
 
 
@@ -320,61 +329,69 @@ def create_note(user_id, note_data):
 
 
 
-def add_label_id_from_label(labels, instance, user):
-    '''
-    input:  labels   => list of string,
-            instance => Note object instance,
-            user     => request.user
-    output: mapped list of label id to perticular note by create new relation
-    error : Lable mapping exception
-    '''
-    for label in labels:
-        try:
-            single_label = Label.objects.get(name = label, user = user.id)
-        except ObjectDoesNotExist:
-            single_label = Label.objects.create(name = label, user = user)
-        try:
-            LabelMap.objects.create(label=single_label, note = instance)
-        except Exception:
-            raise LabelMappingException(code=417, msg=response_code[417])
 
-def edit_label_id_from_label(labels, instance, user):
-    '''
-    input:  labels   => list of string,
-            instance => Note object instance,
-            user     => request.user
-    output: mapped list of label id to perticular note by create new relation or by existing relation
-    error : ObjectDoesNotExist
-    '''
-    for label in labels:
-        try:
-            single_label = Label.objects.get(name = label, user = user.id)
-        except ObjectDoesNotExist:
-            single_label = Label.objects.create(name = label, user = user)
-        try:
-            LabelMap.objects.get(label=single_label, note = instance)
-        except ObjectDoesNotExist:
-            LabelMap.objects.create(label=single_label, note = instance)
 
-def add_collaborator_id_from_collaborator(collaborators, instance, user):
-    '''
-    input:  collaborators => list of string,
-            instance      => Note object instance,
-            user          => request.user
-    output: mapped list of user id to perticular note by create new relation
-    error : ObjectDoesNotExist, CollaboratorMappingException
-    '''
-    invalid_user = []
-    for collaborator in collaborators:
-        try:
-            single_user = User.objects.get(username = collaborator)
-        except ObjectDoesNotExist:
-            invalid_user.append(collaborator)
-        try:
-            UserMap.objects.get_or_create(user = single_user, note = instance)
-        except Exception as e:
-            raise CollaboratorMappingException(code=418, msg=response_code[418])
-    return invalid_user
+
+
+
+
+
+
+# def add_label_id_from_label(labels, instance, user):
+#     '''
+#     input:  labels   => list of string,
+#             instance => Note object instance,
+#             user     => request.user
+#     output: mapped list of label id to perticular note by create new relation
+#     error : Lable mapping exception
+#     '''
+#     for label in labels:
+#         try:
+#             single_label = Label.objects.get(name = label, user = user.id)
+#         except ObjectDoesNotExist:
+#             single_label = Label.objects.create(name = label, user = user)
+#         try:
+#             LabelMap.objects.create(label=single_label, note = instance)
+#         except Exception:
+#             raise LabelMappingException(code=417, msg=response_code[417])
+
+# def edit_label_id_from_label(labels, instance, user):
+#     '''
+#     input:  labels   => list of string,
+#             instance => Note object instance,
+#             user     => request.user
+#     output: mapped list of label id to perticular note by create new relation or by existing relation
+#     error : ObjectDoesNotExist
+#     '''
+#     for label in labels:
+#         try:
+#             single_label = Label.objects.get(name = label, user = user.id)
+#         except ObjectDoesNotExist:
+#             single_label = Label.objects.create(name = label, user = user)
+#         try:
+#             LabelMap.objects.get(label=single_label, note = instance)
+#         except ObjectDoesNotExist:
+#             LabelMap.objects.create(label=single_label, note = instance)
+
+# def add_collaborator_id_from_collaborator(collaborators, instance, user):
+#     '''
+#     input:  collaborators => list of string,
+#             instance      => Note object instance,
+#             user          => request.user
+#     output: mapped list of user id to perticular note by create new relation
+#     error : ObjectDoesNotExist, CollaboratorMappingException
+#     '''
+#     invalid_user = []
+#     for collaborator in collaborators:
+#         try:
+#             single_user = User.objects.get(username = collaborator)
+#         except ObjectDoesNotExist:
+#             invalid_user.append(collaborator)
+#         try:
+#             UserMap.objects.get_or_create(user = single_user, note = instance)
+#         except Exception as e:
+#             raise CollaboratorMappingException(code=418, msg=response_code[418])
+    # return invalid_user
 
 # def get_single_note(id, user_id):
 #     '''
@@ -392,24 +409,24 @@ def add_collaborator_id_from_collaborator(collaborators, instance, user):
 #         raise NotesNotFoundError(code=409, msg=response_code[409])
 
 
-def get_all_note(user_id):
-    '''
-    input : user_id => requested user id
-    output: all note
-    error : NoteNotFoundError
-    '''
-    try:
-        notes = Note.objects.filter(Q(trash=False) and Q(arhive=False) and Q(user_id=user_id))
-        try:
-            collabs_note = Note.objects.filter(Q(trash=False) and Q(arhive=False) 
-                                            and Q(collaborators__in=[user_id]))
-        except Exception as e:
-            pass
-        if collabs_note.exists():
-            notes = notes.union(collabs_note)
-        return notes.order_by('-id')
-    except Exception:
-        raise NotesNotFoundError(code=409, msg=response_code[409])
+# def get_all_note(user_id):
+#     '''
+#     input : user_id => requested user id
+#     output: all note
+#     error : NoteNotFoundError
+#     '''
+#     try:
+#         notes = Note.objects.filter(Q(trash=False) and Q(arhive=False) and Q(user_id=user_id))
+#         try:
+#             collabs_note = Note.objects.filter(Q(trash=False) and Q(arhive=False) 
+#                                             and Q(collaborators__in=[user_id]))
+#         except Exception as e:
+#             pass
+#         if collabs_note.exists():
+#             notes = notes.union(collabs_note)
+#         return notes.order_by('-id')
+#     except Exception:
+#         raise NotesNotFoundError(code=409, msg=response_code[409])
 
 def get_all_trash_note(user_id):
     '''
