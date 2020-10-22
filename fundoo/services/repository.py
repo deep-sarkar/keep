@@ -316,6 +316,10 @@ def create_note(user_id, note_data):
 
 # GET all note
 def get_all_note(user_id):
+    '''
+    param : user_id
+    return: all notes except trash and archive
+    '''
     try:
         with connection.cursor() as cursor:
             cursor.callproc('sp_get_all_note',[user_id])
@@ -326,9 +330,27 @@ def get_all_note(user_id):
 
 
 def get_trashed_notes(user_id):
+    '''
+    param: user_id
+    return: all trash note for perticular user
+    '''
     try:
         with connection.cursor() as cursor:
             cursor.callproc('sp_get_trash_note',[user_id])
+            data = fetchalldict(cursor)
+            return data
+    except Exception:
+        return []
+
+
+def get_archive_notes(user_id):
+    '''
+    param: user_id
+    return: all archive note for perticular user
+    '''
+    try:
+        with connection.cursor() as cursor:
+            cursor.callproc('sp_get_archive_note',[user_id])
             data = fetchalldict(cursor)
             return data
     except Exception:
@@ -436,37 +458,37 @@ def get_trashed_notes(user_id):
 #     except Exception:
 #         raise NotesNotFoundError(code=409, msg=response_code[409])
 
-def get_all_trash_note(user_id):
-    '''
-    input : user_id => requested user id
-    output: all trash note
-    error : NoteNotFoundError
-    '''
-    try:
-        query = '''SELECT * 
-                    FROM note_note 
-                    WHERE (trash = true) and (user_id=%s) 
-                    ORDER BY pin desc, id desc''' % user_id
-        notes = Note.objects.raw(query)
-        return notes
-    except Exception:
-        raise NotesNotFoundError(409, response_code[409])
+# def get_all_trash_note(user_id):
+#     '''
+#     input : user_id => requested user id
+#     output: all trash note
+#     error : NoteNotFoundError
+#     '''
+#     try:
+#         query = '''SELECT * 
+#                     FROM note_note 
+#                     WHERE (trash = true) and (user_id=%s) 
+#                     ORDER BY pin desc, id desc''' % user_id
+#         notes = Note.objects.raw(query)
+#         return notes
+#     except Exception:
+#         raise NotesNotFoundError(409, response_code[409])
 
-def get_all_archive_note(user_id):
-    '''
-    input : user_id => requested user id
-    output: all archived note
-    error : NoteNotFoundError
-    '''
-    try:
-        query = '''SELECT * 
-                    FROM note_note 
-                    WHERE (trash = false) and (archive = true) and (user_id=%s) 
-                    ORDER BY pin desc, id desc''' % user_id
-        notes = Note.objects.raw(query)
-        return notes
-    except Exception:
-        raise NotesNotFoundError(409, response_code[409])
+# def get_all_archive_note(user_id):
+#     '''
+#     input : user_id => requested user id
+#     output: all archived note
+#     error : NoteNotFoundError
+#     '''
+#     try:
+#         query = '''SELECT * 
+#                     FROM note_note 
+#                     WHERE (trash = false) and (archive = true) and (user_id=%s) 
+#                     ORDER BY pin desc, id desc''' % user_id
+#         notes = Note.objects.raw(query)
+#         return notes
+#     except Exception:
+#         raise NotesNotFoundError(409, response_code[409])
 
 
 def get_all_label(user_id):
