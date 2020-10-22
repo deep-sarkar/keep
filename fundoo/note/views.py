@@ -29,7 +29,7 @@ from django.core.exceptions import ObjectDoesNotExist
 
 # Repository
 from services.repository import ( get_all_note,
-                                  get_all_trash_note,
+                                  get_trashed_notes,
                                   get_all_archive_note,
                                   get_single_note,
                                   delete_note_and_relation,
@@ -114,7 +114,6 @@ class GetNote(GenericAPIView):
         '''
         try:
             notes = get_all_note(request.user.id)
-            print(notes)
             return Response({"data":notes, "code":200, "msg":response_code[200]})
         except Exception:
             return Response({"code":416, "msg":response_code[416]})
@@ -179,7 +178,7 @@ class EditNote(GenericAPIView):
                     rem_msg = response_code[415]
             except KeyError:
                 pass
-            updated = asyncio.run(update_data(id,request.data))
+            updated = update_data(id,request.data)
             if updated:
                 if labels != None:
                     map_label(id, request.user.id, labels)
@@ -211,9 +210,8 @@ class TrashNote(GenericAPIView):
         returns: all trash notes for perticular user or raise error
         '''
         try:
-            notes = get_all_trash_note(request.user.id)
-            serializer = EditNoteSerializer(notes, many=True)
-            return Response({"data":serializer.data, "code":200, "msg":response_code[200]})
+            notes = get_trashed_notes(request.user.id)
+            return Response({"data":notes, "code":200, "msg":response_code[200]})
         except NotesNotFoundError as e :
             return Response({'code':e.code, 'msg':e.msg})
 
