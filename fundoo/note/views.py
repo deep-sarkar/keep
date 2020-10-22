@@ -38,7 +38,8 @@ from services.repository import ( add_label_id_from_label,
                                   delete_note_and_relation,
                                   update_data,
                                   map_label,
-                                  map_collaborator
+                                  map_collaborator,
+                                  create_note
                                 )
 
 # Service
@@ -85,26 +86,19 @@ class CreateNote(GenericAPIView):
                     rem_msg = response_code[415]
             except KeyError:
                 pass
-            serializer = NoteSerializer(data = request.data)
-            if serializer.is_valid():
-                instance = serializer.save(user = request.user)
+            id = create_note(request.user.id, request.data)
+            if id != -1:
                 if labels != None:
-                    try:
-                        add_label_id_from_label(labels, instance, request.user)
-                    except LabelMappingException as e:
-                        return Response({"code":e.code, "msg":e.msg})
+                    map_label(id, request.user.id, labels)
                 if collaborators != None:
-                    try:
-                        collab = add_collaborator_id_from_collaborator(collaborators, instance, request.user)
-                    except CollaboratorMappingException as e:
-                        return Response({"code":e.code, "msg":e.msg})
-                resp = {"code":201, 
-                        "msg":response_code[201],
-                        "invalid_user":collab,
-                        "rem_msg":rem_msg}
+                    collab = map_collaborator(id, collaborators)
                 if upcoming_time:
                     email = request.user.email
                     send_reminder_mail.delay(rem, email)
+                resp = {"code":201, 
+                            "msg":response_code[201],
+                            "invalid_user":collab,
+                            "rem_msg":rem_msg}
                 return Response(resp)
             return Response({"code":300, "msg":response_code[300]})
         except Exception as e:
@@ -212,7 +206,7 @@ class EditNote(GenericAPIView):
                     }
             return Response(resp)
         except Exception as e:
-            print(e)
+            # print(e)
             # logging.warning(e)
             return Response({"code":416, "msg":response_code[416]})
 
