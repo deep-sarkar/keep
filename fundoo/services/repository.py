@@ -271,6 +271,46 @@ def map_collaborator(note_id, collaborators):
     
 
 
+# CREATE NOTE
+def insert_note_into_note_table(note):
+    '''
+    param: note data (dictionary)
+    return: note id if created else -1
+    '''
+    try:
+        with connection.cursor() as cursor:
+            cursor.callproc('sp_create_note_and_get_id',[note['title'],note['note'],note['image'],
+                                                note['reminder'],note['archive'],note['trash'],note['pin'],
+                                                note['color'],note['user_id'],])
+            id = cursor.fetchall()
+            return id[0][0]
+    except Exception as e:
+        return -1
+
+
+def create_note(user_id, note_data):
+    '''
+    param: user_id, note_data
+    return: note id if created else -1
+    '''
+    note = {
+        'title':None,
+        'note':None,
+        'image':None,
+        'reminder':None,
+        'archive':False,
+        'trash':False,
+        'pin':False,
+        'color':'#ffffff',
+        'user_id':user_id
+    }
+    try:
+        for key in note_data:
+            note[key] = note_data[key]
+        id = insert_note_into_note_table(note)
+        return id
+    except Exception as e:
+        return -1
 
 
 
