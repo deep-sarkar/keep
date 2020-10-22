@@ -30,7 +30,7 @@ from django.core.exceptions import ObjectDoesNotExist
 # Repository
 from services.repository import ( get_all_note,
                                   get_trashed_notes,
-                                  get_all_archive_note,
+                                  get_archive_notes,
                                   get_single_note,
                                   delete_note_and_relation,
                                   update_data,
@@ -225,9 +225,8 @@ class ArchiveNote(GenericAPIView):
         returns: all archive notes for perticular user or raise error
         '''
         try:
-            notes = get_all_archive_note(request.user.id)
-            serializer = EditNoteSerializer(notes, many=True)
-            return Response({"data":serializer.data, "code":200, "msg":response_code[200]})
+            notes = get_archive_notes(request.user.id)
+            return Response({"data":notes, "code":200, "msg":response_code[200]})
         except NotesNotFoundError as e :
             return Response({'code':e.code, 'msg':e.msg})
 
