@@ -28,13 +28,10 @@ from note.exceptions import (RequestObjectDoesNotExixts,
 from django.core.exceptions import ObjectDoesNotExist
 
 # Repository
-from services.repository import ( add_label_id_from_label,
-                                  get_all_note,
-                                  edit_label_id_from_label,
+from services.repository import ( get_all_note,
                                   get_all_trash_note,
                                   get_all_archive_note,
                                   get_single_note,
-                                  add_collaborator_id_from_collaborator,
                                   delete_note_and_relation,
                                   update_data,
                                   map_label,
@@ -117,17 +114,10 @@ class GetNote(GenericAPIView):
         '''
         try:
             notes = get_all_note(request.user.id)
-            paginator = Paginator(notes, static_data.ITEMS_PER_PAGE)
-            page_number = request.GET.get('page', 1)
-            notes = paginator.page(page_number)
-        except NotesNotFoundError as e:
-            return Response({"code":e.code, "msg":e.msg})
-        except PageNotAnInteger:
-            notes = paginator.page(1)
-        except EmptyPage:
-            notes = paginator.page(paginator.num_pages)
-        serializer = GetNoteSerializer(notes, many=True)
-        return Response({"data":serializer.data, "code":200, "msg":response_code[200]})
+            print(notes)
+            return Response({"data":notes, "code":200, "msg":response_code[200]})
+        except Exception:
+            return Response({"code":416, "msg":response_code[416]})
         
 
 
