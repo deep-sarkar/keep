@@ -9,7 +9,7 @@ from label.serializers import LabelSerializer
 from rest_framework.response import Response
 from rest_framework.generics import GenericAPIView
 from note.models import LabelMap
-from services.repository import get_all_label, delete_label_and_relation, get_single_label
+from services.repository import get_all_label, delete_label_and_relation, get_single_label, edit_label
 import logging
 
 class CreateLabel(GenericAPIView):
@@ -43,8 +43,7 @@ class GetLabel(GenericAPIView):
         '''
         try:
             labels = get_all_label(request.user.id)
-            serializer = LabelSerializer(labels, many = True)
-            return Response({"data":serializer.data,"code":200, "msg":response_code[200]})
+            return Response({"data":labels,"code":200, "msg":response_code[200]})
         except LabelsNotFoundError as e:
             return Response({'code':e.code, 'msg':e.msg})
 
@@ -72,8 +71,7 @@ class EditLabel(GenericAPIView):
         
         try:
             label = self.get_object(id)
-            serializer = LabelSerializer(label)
-            return Response({"data":serializer.data,"code":200, "msg":response_code[200]})
+            return Response({"data":label,"code":200, "msg":response_code[200]})
         except RequestObjectDoesNotExixts as e:
             return Response({'code':e.code, 'msg':e.msg})
         except Exception as e:
@@ -87,13 +85,13 @@ class EditLabel(GenericAPIView):
         returns: update label or does not exists
         '''
         try:
-            label = self.get_object(id)
+            label = request.data.get('name')
+            update = edit_label(label, id, request.user.id)
+            if update:
+                updated_label = self.get_object(id)
+            return Response({"data":updated_label,"code":200, "msg":response_code[200]})
         except RequestObjectDoesNotExixts as e:
             return Response({'code':e.code, 'msg':e.msg})
-        serializer = LabelSerializer(label, data = request.data, partial = True)
-        if serializer.is_valid():
-            serializer.save(user = request.user)
-            return Response({"data":serializer.data,"code":200, "msg":response_code[200]})
         return Response({"code":300, "msg":response_code[300]})
 
 class DeleteLabel(GenericAPIView):
