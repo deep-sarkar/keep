@@ -10,3 +10,12 @@ def custom_login_required(function):
         else:
             return Response({"code":413,"msg":response_code[413]})
     return wrap
+
+
+def admin_access_only(function):
+    def wrap(request, *args, **kwargs):
+        user = request.user
+        if user.is_superuser:
+            return function(request, *args, **kwargs)
+        return Response({"code":419, "msg":response_code[419]})
+    return wrap
