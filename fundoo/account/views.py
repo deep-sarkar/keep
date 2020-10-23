@@ -110,9 +110,9 @@ class LoginAPIView(GenericAPIView):
                     token = generate_login_token(payload)
                     return Response({'code':200,'msg':response_code[200],'token':token})
                 return Response({'code':411,'msg':response_code[411]})
-            return Response({"code":416, "msg":response_code[416]})
+            return Response({"code":412, "msg":response_code[412]})
         except Exception as e:
-            logging.warning(e)
+            # logging.warning(e)
             return Response({"code":416, "msg":response_code[416]})
 
 class Logout(GenericAPIView):
