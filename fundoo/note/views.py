@@ -46,13 +46,14 @@ from services.reminder_service import check_reminder_for_upcoming_time
 # Async task
 from note.task import send_reminder_mail
 
-# Paginator
-from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
-# import logging
-import asyncio
 
+# import logging
 import logging
 
+# asyncio
+import asyncio
+
+from note.request_data_handler import fetch_collaborator, fetch_label, fetch_reminder
 
 
 class CreateNote(GenericAPIView):
@@ -68,24 +69,14 @@ class CreateNote(GenericAPIView):
             rem_msg = None
             collab = None
             upcoming_time = False
-            if not request.user.is_authenticated:
-                return Response({"code":413, "msg":response_code[413]})
-            try:
-                labels = request.data.get('labels') #Fetch labels from request
-            except KeyError:
-                pass
-            try:
-                collaborators = request.data.get('collaborators') #Fetch collaborators from request
-            except KeyError:
-                pass
-            try:
-                rem = request.data.get('reminder') #Fetch reminder from request
+            labels = fetch_label(request)
+            collaborators = fetch_collaborator(request) #Fetch collaborators from request
+            rem = fetch_reminder(request)
+            if rem != None:
                 upcoming_time = check_reminder_for_upcoming_time(rem)
                 if not upcoming_time:
                     request.data['reminder'] = None
                     rem_msg = response_code[415]
-            except KeyError:
-                pass
             id = create_note(request.user.id, request.data)
             if id != -1:
                 if labels != None:
@@ -165,22 +156,14 @@ class EditNote(GenericAPIView):
         upcoming_time = False
         try:
             note = self.get_object(id)
-            try:
-                labels = request.data.get('labels')
-            except KeyError:
-                pass
-            try:
-                collaborators = request.data.get('collaborators')
-            except KeyError:
-                pass
-            try:
-                rem = request.data.get('reminder')
+            labels = fetch_label(request)
+            collaborators = fetch_collaborator(request) #Fetch collaborators from request
+            rem = fetch_reminder(request)
+            if rem != None:
                 upcoming_time = check_reminder_for_upcoming_time(rem)
                 if not upcoming_time:
                     request.data['reminder'] = None
                     rem_msg = response_code[415]
-            except KeyError:
-                pass
             updated = asyncio.run(update_data(id,request.data))
             if updated:
                 if labels != None:
