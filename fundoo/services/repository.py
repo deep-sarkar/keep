@@ -375,6 +375,10 @@ def get_collaborated_notes(user_id):
 
 
 def check_trash_exists(note_id, user_id):
+    '''
+    param: note_id, user_id
+    return: 1 if trash exists else 0
+    '''
     try:
         with connection.cursor() as cursor:
             cursor.callproc('sp_to_check_trash_exists',[note_id, user_id])
@@ -384,6 +388,10 @@ def check_trash_exists(note_id, user_id):
         return 0
 
 def delete_note(note_id, user_id):
+    '''
+    param: note_id, user_id
+    return: True if trash Deleted else False
+    '''
     try:
         trash_exist = check_trash_exists(note_id, user_id)
         if trash_exist == 1:
@@ -396,6 +404,19 @@ def delete_note(note_id, user_id):
     except Exception:
         return False
 
+
+
+def get_all_users_note():
+    '''
+    return: all notes existed in db
+    '''
+    try:
+        with connection.cursor() as cursor:
+            cursor.callproc('sp_get_all_users_note')
+            data = fetchalldict(cursor)
+            return data
+    except Exception:
+        return []
 
 
 
