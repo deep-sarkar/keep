@@ -325,7 +325,8 @@ def get_all_note(user_id):
             cursor.callproc('sp_get_all_note',[user_id])
             data = fetchalldict(cursor)
         colab_notes = get_collaborated_notes(user_id)
-        data.append(colab_notes)
+        if len(colab_notes) != 0:
+            data.append(colab_notes)
         return data
     except Exception as e:
         return []
@@ -373,7 +374,27 @@ def get_collaborated_notes(user_id):
         return []
 
 
+def check_trash_exists(note_id, user_id):
+    try:
+        with connection.cursor() as cursor:
+            cursor.callproc('sp_to_check_trash_exists',[note_id, user_id])
+            data = cursor.fetchall()
+            return data[0][0]
+    except Exception:
+        return 0
 
+def delete_note(note_id, user_id):
+    try:
+        trash_exist = check_trash_exists(note_id, user_id)
+        if trash_exist == 1:
+            delete_old_label_relation(note_id)
+            delete_old_collaborator_relations(note_id)
+            with connection.cursor() as cursor:
+                cursor.execute('''DELETE FROM note_note where id = %s''',[note_id])
+                cursor.fetchall()
+        return True
+    except Exception:
+        return False
 
 
 
@@ -516,7 +537,6 @@ def get_all_label(user_id):
                         WHERE user_id = %s
                         ORDER BY id desc''' % user_id
         labels = Label.objects.raw(query)
-        print(labels)
         return labels
     except Exception:
         raise LabelsNotFoundError(code=308, msg=response_code[308])
@@ -531,8 +551,6 @@ def get_single_label(id, user_id):
                 FROM label_label
                 WHERE (id=%s) and (user_id=%s)''' % (id, user_id) 
     label = Label.objects.raw(query)
-    print("label",label)
-    print("label 0",label[0])
     return label[0]
 
 def delete_label_and_relation(id, user_id):
