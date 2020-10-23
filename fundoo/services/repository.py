@@ -11,7 +11,7 @@ from util.status import response_code
 from django.db.models import Q
 from django.db import connection
 import asyncio
-
+from asgiref.sync import sync_to_async
 
 
 '''
@@ -104,6 +104,8 @@ def get_single_note(note_id, user_id):
 
 
 # Update new data in existing note by field and field value
+
+@sync_to_async
 def update_note(note_id, attribute, value):
     '''
     param: note_id, attributr (column name), value (row value)
@@ -112,17 +114,16 @@ def update_note(note_id, attribute, value):
     try:
         with connection.cursor() as cursor:
             cursor.execute(f'''UPDATE note_note
-                                SET {attribute} = %s
-                                WHERE id = %s''',[value, note_id])
+                                    SET {attribute} = %s
+                                    WHERE id = %s''',[value, note_id])
             data = cursor.fetchall()
             return True
     except Exception as e:
-        print(e)
         return False
 
 
 # Pass table column name and column data into update note function
-def update_data(note_id, new_data):
+async def update_data(note_id, new_data):
     '''
     param: note_id, new_data (new data to update note)
     return: True after update or false if exception occoured
@@ -130,7 +131,7 @@ def update_data(note_id, new_data):
     try:
         for key in new_data:
             value = new_data[key]
-            update_note(note_id, key, value)
+            await asyncio.gather(update_note(note_id, key, value))
         return True
     except Exception as e:
         return False
