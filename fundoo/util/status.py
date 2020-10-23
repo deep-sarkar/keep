@@ -30,5 +30,6 @@ response_code = {
     415 : "Enter upcoming time",
     416 : "Something went wrong. Pleaase Try again",
     417 : "Error occoured while mapping label",
-    418 : "Error occoured while mapping collaborators"
+    418 : "Error occoured while mapping collaborators",
+    419 : "Admin access only"
 }
