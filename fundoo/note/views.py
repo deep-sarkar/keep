@@ -16,7 +16,7 @@ from util import static_data
 
 # Decorator
 from django.utils.decorators import method_decorator
-from util.decorator import custom_login_required
+from util.decorator import custom_login_required, admin_access_only
 from django.views.decorators.cache import cache_page
 
 # Exceptions
@@ -36,7 +36,8 @@ from services.repository import ( get_all_note,
                                   update_data,
                                   map_label,
                                   map_collaborator,
-                                  create_note
+                                  create_note,
+                                  get_all_users_note
                                 )
 
 # Service
@@ -251,3 +252,18 @@ class DeleteNote(GenericAPIView):
             return Response({"code":416, "msg":response_code[416]})
 
 
+class GetViewForAdmin(GenericAPIView):
+    serializer_class = EditNoteSerializer
+
+    @method_decorator(custom_login_required)
+    @method_decorator(admin_access_only)
+    def get(self, request, *args, **kwargs):
+        '''
+        param request: Http request contains user detail
+        returns: all notes for perticular user or raise error
+        '''
+        try:
+            notes = get_all_users_note()
+            return Response({"data":notes, "code":200, "msg":response_code[200]})
+        except Exception:
+            return Response({"code":416, "msg":response_code[416]})
