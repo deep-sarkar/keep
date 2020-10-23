@@ -420,133 +420,6 @@ def get_all_users_note():
         return []
 
 
-
-
-
-# def add_label_id_from_label(labels, instance, user):
-#     '''
-#     input:  labels   => list of string,
-#             instance => Note object instance,
-#             user     => request.user
-#     output: mapped list of label id to perticular note by create new relation
-#     error : Lable mapping exception
-#     '''
-#     for label in labels:
-#         try:
-#             single_label = Label.objects.get(name = label, user = user.id)
-#         except ObjectDoesNotExist:
-#             single_label = Label.objects.create(name = label, user = user)
-#         try:
-#             LabelMap.objects.create(label=single_label, note = instance)
-#         except Exception:
-#             raise LabelMappingException(code=417, msg=response_code[417])
-
-# def edit_label_id_from_label(labels, instance, user):
-#     '''
-#     input:  labels   => list of string,
-#             instance => Note object instance,
-#             user     => request.user
-#     output: mapped list of label id to perticular note by create new relation or by existing relation
-#     error : ObjectDoesNotExist
-#     '''
-#     for label in labels:
-#         try:
-#             single_label = Label.objects.get(name = label, user = user.id)
-#         except ObjectDoesNotExist:
-#             single_label = Label.objects.create(name = label, user = user)
-#         try:
-#             LabelMap.objects.get(label=single_label, note = instance)
-#         except ObjectDoesNotExist:
-#             LabelMap.objects.create(label=single_label, note = instance)
-
-# def add_collaborator_id_from_collaborator(collaborators, instance, user):
-#     '''
-#     input:  collaborators => list of string,
-#             instance      => Note object instance,
-#             user          => request.user
-#     output: mapped list of user id to perticular note by create new relation
-#     error : ObjectDoesNotExist, CollaboratorMappingException
-#     '''
-#     invalid_user = []
-#     for collaborator in collaborators:
-#         try:
-#             single_user = User.objects.get(username = collaborator)
-#         except ObjectDoesNotExist:
-#             invalid_user.append(collaborator)
-#         try:
-#             UserMap.objects.get_or_create(user = single_user, note = instance)
-#         except Exception as e:
-#             raise CollaboratorMappingException(code=418, msg=response_code[418])
-    # return invalid_user
-
-# def get_single_note(id, user_id):
-#     '''
-#     input : id      => requested note id
-#             user_id => requested user id
-#     output: single note
-#     '''
-#     try:
-#         try:
-#             note = Note.objects.get(id=id, user_id=user_id)
-#         except ObjectDoesNotExist:
-#             note = Note.objects.get(id=id, collaborators__in=[user_id])
-#         return note
-#     except Exception:
-#         raise NotesNotFoundError(code=409, msg=response_code[409])
-
-
-# def get_all_note(user_id):
-#     '''
-#     input : user_id => requested user id
-#     output: all note
-#     error : NoteNotFoundError
-#     '''
-#     try:
-#         notes = Note.objects.filter(Q(trash=False) and Q(arhive=False) and Q(user_id=user_id))
-#         try:
-#             collabs_note = Note.objects.filter(Q(trash=False) and Q(arhive=False) 
-#                                             and Q(collaborators__in=[user_id]))
-#         except Exception as e:
-#             pass
-#         if collabs_note.exists():
-#             notes = notes.union(collabs_note)
-#         return notes.order_by('-id')
-#     except Exception:
-#         raise NotesNotFoundError(code=409, msg=response_code[409])
-
-# def get_all_trash_note(user_id):
-#     '''
-#     input : user_id => requested user id
-#     output: all trash note
-#     error : NoteNotFoundError
-#     '''
-#     try:
-#         query = '''SELECT * 
-#                     FROM note_note 
-#                     WHERE (trash = true) and (user_id=%s) 
-#                     ORDER BY pin desc, id desc''' % user_id
-#         notes = Note.objects.raw(query)
-#         return notes
-#     except Exception:
-#         raise NotesNotFoundError(409, response_code[409])
-
-# def get_all_archive_note(user_id):
-#     '''
-#     input : user_id => requested user id
-#     output: all archived note
-#     error : NoteNotFoundError
-#     '''
-#     try:
-#         query = '''SELECT * 
-#                     FROM note_note 
-#                     WHERE (trash = false) and (archive = true) and (user_id=%s) 
-#                     ORDER BY pin desc, id desc''' % user_id
-#         notes = Note.objects.raw(query)
-#         return notes
-#     except Exception:
-#         raise NotesNotFoundError(409, response_code[409])
-
-
 def get_all_label(user_id):
     '''
     input : user_id => requested user id
@@ -569,13 +442,16 @@ def get_single_label(id, user_id):
             user_id => requested user id
     output: single label
     '''
-    with connection.cursor() as cursor:
-        query = '''SELECT * 
-                    FROM label_label
-                    WHERE (id=%s) and (user_id=%s)''' % (id, user_id) 
-        cursor.execute(query)
-        label = fetchalldict(cursor)
-        return label
+    try:
+        with connection.cursor() as cursor:
+            query = '''SELECT * 
+                        FROM label_label
+                        WHERE (id=%s) and (user_id=%s)''' % (id, user_id) 
+            cursor.execute(query)
+            label = fetchalldict(cursor)
+            return label
+    except Exception:
+        return []
 
 def edit_label(label, label_id, user_id):
     '''
@@ -591,7 +467,22 @@ def edit_label(label, label_id, user_id):
     except Exception as e:
         return False
 
-def delete_label_and_relation(id, user_id):
+def delete_label_note_relation(label_id):
+    '''
+    param: label_id
+    return: True after deleting all old relation for label with note
+    '''
+    try:
+        with connection.cursor() as cursor:
+            cursor.execute('''DELETE FROM note_labelmap
+                                WHERE label_id = %s''',[label_id])
+            data = cursor.fetchall()
+            return True
+    except Exception:
+        return False
+
+
+def delete_label_and_relation(label_id, user_id):
     '''
     input : id      => label id
             user_id => requested user id
@@ -599,27 +490,16 @@ def delete_label_and_relation(id, user_id):
     error : Exception
     '''
     try:
-        label = Label.objects.get(id = id, user_id =user_id)
-        mapped_notes = LabelMap.objects.filter(label_id = id)
-        if mapped_notes != None:
-            mapped_notes.delete()
-            label.delete()
-            return True
-    except Exception:
-        pass
-    return False
-
-# def delete_note_and_relation(id, user_id):
-#     try:
-#         note = Note.objects.get(id = id, trash = True, user_id = user_id)
-#         mapped_notes     = LabelMap.objects.filter(note_id = id)
-#         mapped_user_note = UserMap.objects.filter(note_id = id) 
-#         print(mapped_notes)
-#         if mapped_notes != None:
-#             mapped_notes.delete()
-#             mapped_user_note.delete()
-#             note.delete()
-#             return True
-#     except Exception:
-#         return False
-#     return False
+        label = get_single_label(label_id, user_id)
+        if len(label) != 0:
+            del_mapped_relation = delete_label_note_relation(label_id)
+            if del_mapped_relation:
+                with connection.cursor() as cursor:
+                    cursor.execute('''DELETE 
+                                      FROM label_label
+                                      WHERE id = %s''',[label_id])
+                    cursor.fetchall()
+                return True
+        return False
+    except Exception as e:
+        return False
