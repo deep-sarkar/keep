@@ -32,7 +32,7 @@ from services.repository import ( get_all_note,
                                   get_trashed_notes,
                                   get_archive_notes,
                                   get_single_note,
-                                  delete_note_and_relation,
+                                  delete_note,
                                   update_data,
                                   map_label,
                                   map_collaborator,
@@ -49,6 +49,8 @@ from note.task import send_reminder_mail
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 # import logging
 import asyncio
+
+import logging
 
 
 
@@ -240,8 +242,8 @@ class DeleteNote(GenericAPIView):
         returns: delete perticular note or return does not exists
         '''
         try:
-            delete_note = delete_note_and_relation(id, request.user.id)
-            if delete_note:
+            delete = delete_note(id, request.user.id)
+            if delete:
                 return Response({"code":200, "msg":response_code[200]})
             return Response({"code":409, "msg":response_code[409]})
         except Exception as e:
