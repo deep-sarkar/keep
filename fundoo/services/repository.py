@@ -315,6 +315,25 @@ def create_note(user_id, note_data):
         return -1
 
 
+@sync_to_async
+def string_to_list(string_value):
+    
+    try:
+        if len(string_value) != 0:
+            list_of_str = string_value.split(',')
+            list_of_str.pop()
+            return list_of_str
+        return None
+    except Exception as e:
+        print(e)
+        return None
+
+async def get_label_and_collab_list(notes):
+    for note in notes:
+        note['collaborators'] = await string_to_list(note['collaborators'])
+        note['labels'] = await string_to_list(note['labels'])
+    return notes
+
 # GET all note
 def get_all_note(user_id):
     '''
@@ -328,7 +347,8 @@ def get_all_note(user_id):
         colab_notes = get_collaborated_notes(user_id)
         if len(colab_notes) != 0:
             data.append(colab_notes)
-        return data
+        notes = asyncio.run(get_label_and_collab_list(data))
+        return notes
     except Exception as e:
         return []
 
