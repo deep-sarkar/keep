@@ -33,4 +33,4 @@ def get_note_reminders():
                 all_reminder.append([reminder_time, email])
         return all_reminder
     except Exception as e:
-        print(e)
+        return []
