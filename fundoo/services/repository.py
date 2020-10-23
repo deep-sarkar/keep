@@ -554,12 +554,12 @@ def get_all_label(user_id):
     error : LabelNotFoundError
     '''
     try:
-        query    =   '''SELECT * 
-                        FROM label_label
-                        WHERE user_id = %s
-                        ORDER BY id desc''' % user_id
-        labels = Label.objects.raw(query)
-        return labels
+        with connection.cursor() as cursor:
+            cursor.execute('''SELECT *
+                              FROM label_label
+                              WHERE user_id = %s''',[user_id])
+            labels = fetchalldict(cursor)
+            return labels
     except Exception:
         raise LabelsNotFoundError(code=308, msg=response_code[308])
 
@@ -569,11 +569,27 @@ def get_single_label(id, user_id):
             user_id => requested user id
     output: single label
     '''
-    query = '''SELECT * 
-                FROM label_label
-                WHERE (id=%s) and (user_id=%s)''' % (id, user_id) 
-    label = Label.objects.raw(query)
-    return label[0]
+    with connection.cursor() as cursor:
+        query = '''SELECT * 
+                    FROM label_label
+                    WHERE (id=%s) and (user_id=%s)''' % (id, user_id) 
+        cursor.execute(query)
+        label = fetchalldict(cursor)
+        return label
+
+def edit_label(label, label_id, user_id):
+    '''
+    param: label, label_id, user_id
+    return: true id updated else false
+    '''
+    try:
+        with connection.cursor() as cursor:
+            cursor.execute('''UPDATE label_label 
+                                SET name = %s
+                                WHERE id = %s and user_id = %s''',[label, label_id, user_id])
+        return True
+    except Exception as e:
+        return False
 
 def delete_label_and_relation(id, user_id):
     '''
@@ -593,17 +609,17 @@ def delete_label_and_relation(id, user_id):
         pass
     return False
 
-def delete_note_and_relation(id, user_id):
-    try:
-        note = Note.objects.get(id = id, trash = True, user_id = user_id)
-        mapped_notes     = LabelMap.objects.filter(note_id = id)
-        mapped_user_note = UserMap.objects.filter(note_id = id) 
-        print(mapped_notes)
-        if mapped_notes != None:
-            mapped_notes.delete()
-            mapped_user_note.delete()
-            note.delete()
-            return True
-    except Exception:
-        return False
-    return False
+# def delete_note_and_relation(id, user_id):
+#     try:
+#         note = Note.objects.get(id = id, trash = True, user_id = user_id)
+#         mapped_notes     = LabelMap.objects.filter(note_id = id)
+#         mapped_user_note = UserMap.objects.filter(note_id = id) 
+#         print(mapped_notes)
+#         if mapped_notes != None:
+#             mapped_notes.delete()
+#             mapped_user_note.delete()
+#             note.delete()
+#             return True
+#     except Exception:
+#         return False
+#     return False
