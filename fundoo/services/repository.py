@@ -348,7 +348,10 @@ def get_all_note(user_id):
             data = fetchalldict(cursor)
         colab_notes = get_collaborated_notes(user_id)
         if len(colab_notes) != 0:
-            data.append(colab_notes)
+            if len(data) == 0:
+                data = colab_notes
+            else:
+                data.append(colab_notes)
         notes = asyncio.run(get_label_and_collab_list(data))
         return notes
     except Exception as e:
