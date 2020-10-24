@@ -317,7 +317,10 @@ def create_note(user_id, note_data):
 
 @sync_to_async
 def string_to_list(string_value):
-    
+    '''
+    param: string form of labels and collaborator
+    return: list of labels and collaborators or None
+    '''
     try:
         if len(string_value) != 0:
             list_of_str = string_value.split(',')
@@ -325,7 +328,6 @@ def string_to_list(string_value):
             return list_of_str
         return None
     except Exception as e:
-        print(e)
         return None
 
 async def get_label_and_collab_list(notes):
