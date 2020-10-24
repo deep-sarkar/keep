@@ -103,15 +103,16 @@ class LoginAPIView(GenericAPIView):
             if valid != None:
                 return Response(valid)                         #If error occour will return error msg and code
             user_obj = authenticate(request, username=username, password=password)
-            if user_obj is not None:
-                if user_obj.is_active:
-                    login(request,user_obj)
-                    payload = {"username":username}
-                    token = generate_login_token(payload)
-                    return Response({'code':200,'msg':response_code[200],'token':token})
-                return Response({'code':411,'msg':response_code[411]})
+            if user_obj.is_active:
+                login(request,user_obj)
+                payload = {"username":username}
+                token = generate_login_token(payload)
+                return Response({'code':200,'msg':response_code[200],'token':token})
+            return Response({'code':411,'msg':response_code[411]})
+        except AttributeError:
             return Response({"code":412, "msg":response_code[412]})
         except Exception as e:
+            print(e)
             # logging.warning(e)
             return Response({"code":416, "msg":response_code[416]})
 
