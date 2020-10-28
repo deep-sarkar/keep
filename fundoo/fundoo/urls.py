@@ -16,6 +16,8 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path, include
 from rest_framework_swagger.views import get_swagger_view
+from django.conf.urls.static import static
+from django.conf import settings
 
 schema_view = get_swagger_view(title="fundoo API Documentation")
 
@@ -25,5 +27,6 @@ urlpatterns = [
     path('account/', include('account.urls')),
     path('note/', include('note.urls')),
     path('label/', include('label.urls')),
-    path('',schema_view)
-]
+    path('',schema_view),
+] 
+urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
