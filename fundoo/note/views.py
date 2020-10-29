@@ -53,7 +53,7 @@ import logging
 # asyncio
 import asyncio
 
-from note.request_data_handler import fetch_collaborator, fetch_label, fetch_reminder
+from note.request_data_handler import fetch_collaborator, fetch_label, fetch_reminder, save_image
 
 
 class CreateNote(GenericAPIView):
@@ -79,6 +79,7 @@ class CreateNote(GenericAPIView):
                     rem_msg = response_code[415]
             id = create_note(request.user.id, request.data)
             if id != -1:
+                image = save_image(request)
                 if labels != None:
                     map_label(id, request.user.id, labels)
                 if collaborators != None:
@@ -93,6 +94,7 @@ class CreateNote(GenericAPIView):
                 return Response(resp)
             return Response({"code":300, "msg":response_code[300]})
         except Exception as e:
+            print(e)
             # logging.warning(e)
             return Response({"code":416, "msg":response_code[416]})
 
@@ -141,7 +143,7 @@ class EditNote(GenericAPIView):
         except RequestObjectDoesNotExixts as e:
             return Response({'code':e.code, 'msg':e.msg})
         except Exception as e:
-            # print(e)
+            print(e)
             # logging.warning(e)
             return Response({"code":416, "msg":response_code[416]})
 
@@ -159,6 +161,7 @@ class EditNote(GenericAPIView):
             labels = fetch_label(request)
             collaborators = fetch_collaborator(request) #Fetch collaborators from request
             rem = fetch_reminder(request)
+            image = save_image(request)
             if rem != None:
                 upcoming_time = check_reminder_for_upcoming_time(rem)
                 if not upcoming_time:
@@ -181,7 +184,7 @@ class EditNote(GenericAPIView):
                     }
             return Response(resp)
         except Exception as e:
-            # print(e)
+            print(e)
             # logging.warning(e)
             return Response({"code":416, "msg":response_code[416]})
 
