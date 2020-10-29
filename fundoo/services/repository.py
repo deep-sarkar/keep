@@ -306,14 +306,25 @@ def create_note(user_id, note_data):
         'color':'#ffffff',
         'user_id':user_id
     }
+    image_name = get_image_name(user_id, note_data)
+    if image_name != None:
+        note_data['image'] = image_name
     try:
         for key in note_data:
             note[key] = note_data[key]
         id = insert_note_into_note_table(note)
         return id
     except Exception as e:
+        print(e)
         return -1
 
+def get_image_name(user_id, data):
+    try:
+        image = data.get('image')
+        file_name = str(user_id)+ image.name
+        return file_name
+    except Exception:
+        return None
 
 @sync_to_async
 def string_to_list(string_value):
