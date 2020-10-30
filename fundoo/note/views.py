@@ -167,7 +167,7 @@ class EditNote(GenericAPIView):
                 if not upcoming_time:
                     request.data['reminder'] = None
                     rem_msg = response_code[415]
-            updated = asyncio.run(update_data(request.user.id, id, request.data))
+            updated = asyncio.run(update_data(id, request.data))
             if updated:
                 if labels != None:
                     map_label(id, request.user.id, labels)

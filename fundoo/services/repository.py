@@ -106,7 +106,7 @@ def get_single_note(note_id, user_id):
 # Update new data in existing note by field and field value
 
 @sync_to_async
-def update_note(user_id,note_id, attribute, value):
+def update_note(note_id, attribute, value):
     '''
     param: note_id, attributr (column name), value (row value)
     return: True if updated
@@ -125,7 +125,7 @@ def update_note(user_id,note_id, attribute, value):
 
 
 # Pass table column name and column data into update note function
-async def update_data(user_id, note_id, new_data):
+async def update_data(note_id, new_data):
     '''
     param: note_id, new_data (new data to update note)
     return: True after update or false if exception occoured
@@ -133,7 +133,7 @@ async def update_data(user_id, note_id, new_data):
     try:
         for key in new_data:
             value = new_data[key]
-            await asyncio.gather(update_note(user_id, note_id, key, value))
+            await asyncio.gather(update_note(note_id, key, value))
         return True
     except Exception as e:
         return False
