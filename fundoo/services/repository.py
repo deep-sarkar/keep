@@ -315,10 +315,13 @@ def create_note(user_id, note_data):
         id = insert_note_into_note_table(note)
         return id
     except Exception as e:
-        print(e)
         return -1
 
 def get_image_name(user_id, data):
+    '''
+    params: user_id, new note data
+    return: image name if exists
+    '''
     try:
         image = data.get('image')
         file_name = str(user_id)+ image.name
